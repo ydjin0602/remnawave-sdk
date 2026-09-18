@@ -36,7 +36,7 @@ class UserTrafficDto(BaseModel):
 
 
 class BaseUserDto(BaseModel):
-    uuid: UUID
+    # uuid: UUID
     id: int
     short_uuid: str
     username: str
