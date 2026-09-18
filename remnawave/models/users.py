@@ -118,7 +118,7 @@ class UserTrafficDto(BaseModel):
 
 class UserResponseDto(BaseModel):
     """User response DTO - обновленная структура с userTraffic"""
-    uuid: UUID
+    # uuid: UUID
     id: int
     short_uuid: str = Field(alias="shortUuid")
     username: str
