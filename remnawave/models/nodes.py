@@ -1,336 +1,247 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Annotated, List, Optional, Union, Literal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, RootModel
+from pydantic import BaseModel, Field, RootModel
 
-from remnawave.models.internal_squads import InboundsDto
-
-
-class ExcludedInbounds(BaseModel):
-    uuid: UUID
-    tag: str
-    type: str
-    network: Optional[str] = None
-    security: Optional[str] = None
-
-
-class RestartEventResponse(BaseModel):
-    event_sent: bool = Field(alias="eventSent")
-
-
-class DeleteResponse(BaseModel):
-    is_deleted: bool = Field(alias="isDeleted")
-
-
-class ReorderNodeItem(BaseModel):
-    view_position: int = Field(serialization_alias="viewPosition")
-    uuid: UUID
+from remnawave.enums import NodeUsageType
 
 
 class GetAllNodesTagsResponseDto(BaseModel):
-    """Response with all nodes tags"""
-    tags: List[str]
+    tags: list[str]
 
 
-class NodeProviderDto(BaseModel):
-    """Node provider information"""
-    uuid: UUID
-    name: str
-    favicon_link: Optional[str] = Field(None, alias="faviconLink")
-    login_url: Optional[str] = Field(None, alias="loginUrl")
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
+class ConfigProfileDto(BaseModel):
+    active_config_profile_uuid: UUID = Field(..., alias="activeConfigProfileUuid")
+    active_inbounds: list[UUID] = Field(..., alias="activeInbounds")
 
 
-class NodeConfigProfileDto(BaseModel):
-    active_config_profile_uuid: Optional[UUID] = Field(alias="activeConfigProfileUuid")
-    active_inbounds: List[InboundsDto] = Field(alias="activeInbounds")
-
-
-class NodeConfigProfileRequestDto(BaseModel):
-    active_config_profile_uuid: UUID = Field(alias="activeConfigProfileUuid")
-    active_inbounds: List[UUID] = Field(alias="activeInbounds")
+class NodeIpsDto(BaseModel):
+    ip: str
+    status: NodeUsageType
 
 
 class CreateNodeRequestDto(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=3, max_length=30)]
-    address: Annotated[str, StringConstraints(min_length=2)]
-    port: Optional[int] = Field(None, ge=1, le=65535)
-    is_traffic_tracking_active: Optional[bool] = Field(
-        False, 
-        serialization_alias="isTrafficTrackingActive",
-    )
-    traffic_limit_bytes: Optional[float] = Field(
-        None, serialization_alias="trafficLimitBytes", ge=0
-    )
-    notify_percent: Optional[int] = Field(
-        None, serialization_alias="notifyPercent", ge=0, le=100
-    )
-    traffic_reset_day: Optional[int] = Field(
-        None, serialization_alias="trafficResetDay", ge=1, le=31
-    )
-    excluded_inbounds: Optional[List[UUID]] = Field(
-        None, serialization_alias="excludedInbounds"
-    )
-    country_code: Annotated[Optional[str], StringConstraints(max_length=2)] = Field(
-        "XX",
-        serialization_alias="countryCode"
-    )
-    consumption_multiplier: Optional[float] = Field(
-        None, serialization_alias="consumptionMultiplier", ge=0, le=100
-    )
-    node_consumption_multiplier: Optional[float] = Field(
-        None, serialization_alias="nodeConsumptionMultiplier", ge=0, le=100
-    )
-    note: Optional[str] = Field(None, serialization_alias="note", max_length=255)
-    proxy_url: Optional[str] = Field(
-        None,
-        serialization_alias="proxyUrl",
-        pattern=r"^socks5://(?:[^:@/\s]+(?::[^@/\s]*)?@)?[^:@/\s]+:\d{1,5}$",
-    )
-    config_profile: NodeConfigProfileRequestDto = Field(
-        serialization_alias="configProfile"
-    )
-    provider_uuid: Optional[UUID] = Field(None, serialization_alias="providerUuid")
-    tags: Optional[List[Annotated[str, StringConstraints(max_length=36, pattern=r'^[A-Z0-9_:]+$')]]] = Field(
-        None, 
-        serialization_alias="tags",
-        max_length=10
-    )
-    active_plugin_uuid: Optional[UUID] = Field(
-        None, serialization_alias="activePluginUuid"
-    )
-
-
-class UpdateNodeRequestDto(BaseModel):
-    uuid: UUID
-    name: Annotated[Optional[str], StringConstraints(min_length=3, max_length=30)] = None
-    address: Annotated[Optional[str], StringConstraints(min_length=2)] = None
-    port: Optional[float] = Field(None, ge=1, le=65535)  # ИСПРАВЛЕН тип на float
-    is_traffic_tracking_active: Optional[bool] = Field(
+    name: str
+    address: str
+    port: int | None = None
+    proxy_url: str | None = Field(None, serialization_alias="proxyUrl")
+    is_traffic_tracking_active: bool | None = Field(
         None, serialization_alias="isTrafficTrackingActive"
     )
-    traffic_limit_bytes: Optional[float] = Field(
-        None, serialization_alias="trafficLimitBytes", ge=0
+    traffic_limit_bytes: float | None = Field(
+        None, serialization_alias="trafficLimitBytes"
     )
-    notify_percent: Optional[float] = Field(
-        None, serialization_alias="notifyPercent", ge=0, le=100
+    notify_percent: int | None = Field(None, serialization_alias="notifyPercent")
+    traffic_reset_day: int | None = Field(None, serialization_alias="trafficResetDay")
+    country_code: str | None = Field(None, serialization_alias="countryCode")
+    consumption_multiplier: float | None = Field(
+        None, serialization_alias="consumptionMultiplier"
     )
-    traffic_reset_day: Optional[float] = Field(
-        None, serialization_alias="trafficResetDay", ge=1, le=31
+    node_consumption_multiplier: float | None = Field(
+        None, serialization_alias="nodeConsumptionMultiplier"
     )
-    excluded_inbounds: Optional[List[UUID]] = Field(
-        None, serialization_alias="excludedInbounds"
-    )
-    country_code: Annotated[Optional[str], StringConstraints(max_length=2)] = Field(
-        None, serialization_alias="countryCode"
-    )
-    consumption_multiplier: Optional[float] = Field(
-        None, serialization_alias="consumptionMultiplier", ge=0, le=100
-    )
-    node_consumption_multiplier: Optional[float] = Field(
-        None, serialization_alias="nodeConsumptionMultiplier", ge=0, le=100
-    )
-    note: Optional[str] = Field(None, serialization_alias="note", max_length=255)
-    proxy_url: Optional[str] = Field(
-        None,
-        serialization_alias="proxyUrl",
-        pattern=r"^socks5://(?:[^:@/\s]+(?::[^@/\s]*)?@)?[^:@/\s]+:\d{1,5}$",
-    )
-    config_profile: Optional[NodeConfigProfileRequestDto] = Field(
-        None, serialization_alias="configProfile"
-    )
-    provider_uuid: Optional[UUID] = Field(None, serialization_alias="providerUuid")
-    tags: Optional[List[Annotated[str, StringConstraints(max_length=36, pattern=r'^[A-Z0-9_:]+$')]]] = Field(
-        None,
-        serialization_alias="tags",
-        max_length=10
-    )
-    active_plugin_uuid: Optional[UUID] = Field(
+    config_profile: ConfigProfileDto = Field(..., serialization_alias="configProfile")
+    provider_uuid: UUID | None = Field(None, serialization_alias="providerUuid")
+    tags: list[str] | None = None
+    active_plugin_uuid: UUID | None = Field(
         None, serialization_alias="activePluginUuid"
     )
+    note: str | None = None
+    ips: list[NodeIpsDto] | None = None
 
 
-class ReorderNodeRequestDto(BaseModel):
-    nodes: List[ReorderNodeItem]
+class ActiveInboundsDto(BaseModel):
+    uuid: UUID
+    profile_uuid: UUID = Field(..., alias="profileUuid")
+    tag: str
+    type: str
+    network: str | None = None
+    security: str | None = None
+    port: float | None = None
+    raw_inbound: Any | None = Field(None, alias="rawInbound")
+
+
+class NodeResponseConfigProfileDto(BaseModel):
+    active_config_profile_uuid: UUID | None = Field(
+        None, alias="activeConfigProfileUuid"
+    )
+    active_inbounds: list[ActiveInboundsDto] = Field(..., alias="activeInbounds")
+
+
+class NodeProviderDto(BaseModel):
+    uuid: UUID
+    name: str
+    favicon_link: str | None = Field(None, alias="faviconLink")
+    login_url: str | None = Field(None, alias="loginUrl")
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+
+
+class NodeInfoDto(BaseModel):
+    arch: str
+    cpus: int
+    cpu_model: str = Field(..., alias="cpuModel")
+    memory_total: float = Field(..., alias="memoryTotal")
+    hostname: str
+    platform: str
+    release: str
+    type: str
+    version: str
+    network_interfaces: list[str] = Field(..., alias="networkInterfaces")
+
+
+class InterfaceDto(BaseModel):
+    interface: str
+    rx_bytes_per_sec: float = Field(..., alias="rxBytesPerSec")
+    tx_bytes_per_sec: float = Field(..., alias="txBytesPerSec")
+    rx_total: float = Field(..., alias="rxTotal")
+    tx_total: float = Field(..., alias="txTotal")
+
+
+class NodeStatsDto(BaseModel):
+    memory_free: float = Field(..., alias="memoryFree")
+    memory_used: float = Field(..., alias="memoryUsed")
+    uptime: float
+    load_avg: list[float] = Field(..., alias="loadAvg")
+    interface: InterfaceDto | None = None
+
+
+class SystemDto(BaseModel):
+    info: NodeInfoDto
+    stats: NodeStatsDto
+
+
+class VersionsDto(BaseModel):
+    xray: str
+    node: str
 
 
 class NodeResponseDto(BaseModel):
     uuid: UUID
+    id: int
     name: str
     address: str
-    port: Optional[int] = None
-    is_connected: bool = Field(alias="isConnected")
-    is_disabled: bool = Field(alias="isDisabled")
-    is_connecting: bool = Field(alias="isConnecting")
-    last_status_change: Optional[datetime] = Field(None, alias="lastStatusChange")
-    last_status_message: Optional[str] = Field(None, alias="lastStatusMessage")
-    xray_version: Optional[str] = Field(None, alias="xrayVersion")
-    node_version: Optional[str] = Field(None, alias="nodeVersion")
-    xray_uptime: float = Field(0, alias="xrayUptime")
-    is_traffic_tracking_active: bool = Field(alias="isTrafficTrackingActive")
-    traffic_reset_day: Optional[int] = Field(None, alias="trafficResetDay")
-    traffic_limit_bytes: Optional[float] = Field(None, alias="trafficLimitBytes")
-    traffic_used_bytes: Optional[float] = Field(None, alias="trafficUsedBytes")
-    notify_percent: Optional[int] = Field(None, alias="notifyPercent")
-    users_online: Optional[int] = Field(None, alias="usersOnline")
-    view_position: int = Field(alias="viewPosition")
-    country_code: str = Field(alias="countryCode")
-    consumption_multiplier: float = Field(alias="consumptionMultiplier")
-    node_consumption_multiplier: Optional[float] = Field(None, alias="nodeConsumptionMultiplier")
-    note: Optional[str] = Field(None, alias="note")
-    proxy_url: Optional[str] = Field(None, alias="proxyUrl")
-    cpu_count: Optional[int] = Field(None, alias="cpuCount")
-    cpu_model: Optional[str] = Field(None, alias="cpuModel")
-    total_ram: Optional[str] = Field(None, alias="totalRam")
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
-    config_profile: NodeConfigProfileDto = Field(alias="configProfile")
-    provider_uuid: Optional[UUID] = Field(None, alias="providerUuid")
-    provider: Optional[NodeProviderDto] = None
-    tags: List[str] = Field(default_factory=list, alias="tags")
-    active_plugin_uuid: Optional[UUID] = Field(None, alias="activePluginUuid")
+    port: int | None = None
+    proxy_url: str | None = Field(None, alias="proxyUrl")
+    is_connected: bool = Field(..., alias="isConnected")
+    is_disabled: bool = Field(..., alias="isDisabled")
+    is_connecting: bool = Field(..., alias="isConnecting")
+    last_status_change: datetime | None = Field(None, alias="lastStatusChange")
+    last_status_message: str | None = Field(None, alias="lastStatusMessage")
+    is_traffic_tracking_active: bool = Field(..., alias="isTrafficTrackingActive")
+    traffic_reset_day: int | None = Field(None, alias="trafficResetDay")
+    traffic_limit_bytes: float | None = Field(None, alias="trafficLimitBytes")
+    traffic_used_bytes: float | None = Field(None, alias="trafficUsedBytes")
+    notify_percent: int | None = Field(None, alias="notifyPercent")
+    view_position: int = Field(..., alias="viewPosition")
+    country_code: str = Field(..., alias="countryCode")
+    consumption_multiplier: float = Field(..., alias="consumptionMultiplier")
+    node_consumption_multiplier: float = Field(..., alias="nodeConsumptionMultiplier")
+    tags: list[str]
+    ips: list[NodeIpsDto]
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    config_profile: NodeResponseConfigProfileDto = Field(..., alias="configProfile")
+    provider_uuid: UUID | None = Field(None, alias="providerUuid")
+    provider: NodeProviderDto | None = None
+    active_plugin_uuid: UUID | None = Field(None, alias="activePluginUuid")
+    system: SystemDto | None = None
+    versions: VersionsDto | None = None
+    xray_uptime: float = Field(..., alias="xrayUptime")
+    users_online: float = Field(..., alias="usersOnline")
+    note: str | None = None
 
 
-class CreateNodeResponseDto(NodeResponseDto):
-    pass
+class GetAllNodesResponseDto(RootModel):
+    root: list[NodeResponseDto]
 
 
-class UpdateNodeResponseDto(NodeResponseDto):
-    pass
+class UpdateNodeRequestDto(BaseModel):
+    uuid: UUID
+    name: str | None = None
+    address: str | None = None
+    port: float | None = None
+    proxy_url: str | None = Field(None, serialization_alias="proxyUrl")
+    is_traffic_tracking_active: bool | None = Field(
+        None, serialization_alias="isTrafficTrackingActive"
+    )
+    traffic_limit_bytes: float | None = Field(
+        None, serialization_alias="trafficLimitBytes"
+    )
+    notify_percent: float | None = Field(None, serialization_alias="notifyPercent")
+    traffic_reset_day: float | None = Field(None, serialization_alias="trafficResetDay")
+    country_code: str | None = Field(None, serialization_alias="countryCode")
+    consumption_multiplier: float | None = Field(
+        None, serialization_alias="consumptionMultiplier"
+    )
+    node_consumption_multiplier: float | None = Field(
+        None, serialization_alias="nodeConsumptionMultiplier"
+    )
+    config_profile: ConfigProfileDto | None = Field(
+        None, serialization_alias="configProfile"
+    )
+    provider_uuid: UUID | None = Field(None, serialization_alias="providerUuid")
+    tags: list[str] | None = None
+    active_plugin_uuid: UUID | None = Field(
+        None, serialization_alias="activePluginUuid"
+    )
+    note: str | None = None
+    ips: list[NodeIpsDto] | None = None
 
 
-class GetOneNodeResponseDto(NodeResponseDto):
-    pass
+class RestartNodeRequestDto(BaseModel):
+    force_restart: bool = Field(..., serialization_alias="forceRestart")
 
 
-class GetAllNodesResponseDto(RootModel[List[NodeResponseDto]]):
-    root: List[NodeResponseDto]
-
-    def __iter__(self):
-        return iter(self.root)
-
-    def __getitem__(self, item):
-        return self.root[item]
-    
-    def __bool__(self):
-        """Return True if list is not empty"""
-        return bool(self.root)
-    
-    def __len__(self):
-        """Return length of list"""
-        return len(self.root)
+class RestartAllNodesRequestDto(BaseModel):
+    force_restart: bool = Field(..., serialization_alias="forceRestart")
 
 
-
-class EnableNodeResponseDto(NodeResponseDto):
-    pass
-
-
-class DisableNodeResponseDto(NodeResponseDto):
-    pass
+class ReorderNodeItem(BaseModel):
+    view_position: int = Field(..., alias="viewPosition")
+    uuid: UUID
 
 
-class RestartNodeResponseDto(BaseModel):
-    event_sent: bool = Field(alias="eventSent")
+class ReorderNodesRequestDto(BaseModel):
+    nodes: list[ReorderNodeItem]
 
 
-class RestartAllNodesResponseDto(BaseModel):
-    event_sent: bool = Field(alias="eventSent")
+class ReorderNodeResponseDto(RootModel):
+    root: list[NodeResponseDto]
 
 
-class ResetNodeTrafficResponseDto(BaseModel):
-    event_sent: bool = Field(alias="eventSent")
-
-
-class ReorderNodeResponseDto(RootModel[List[NodeResponseDto]]):
-    root: List[NodeResponseDto]
-
-    def __iter__(self):
-        return iter(self.root)
-
-    def __getitem__(self, item):
-        return self.root[item]
-    
-    def __bool__(self):
-        """Return True if list is not empty"""
-        return bool(self.root)
-    
-    def __len__(self):
-        """Return length of list"""
-        return len(self.root)
-
-
-class DeleteNodeResponseDto(BaseModel):
-    is_deleted: bool = Field(alias="isDeleted")
-
-    def __bool__(self):
-        return self.is_deleted
-
-
-class RestartAllNodesRequestBodyDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    force_restart: bool = Field(default=False, alias="forceRestart")
-
-
-class RestartNodeRequestBodyDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    force_restart: bool = Field(default=False, alias="forceRestart")
-
-class ResetNodeTrafficRequestDto(BaseModel):
-    uuid: Union[str, UUID] = Field(alias="uuid")
-
-class ResetNodeTrafficResponseDto(RestartEventResponse):
-    pass
-
-class ConfigProfileData(BaseModel):
-    """Config profile data for modification"""
-    active_config_profile_uuid: str = Field(alias="activeConfigProfileUuid")
-    active_inbounds: List[str] = Field(alias="activeInbounds", min_length=1)
+class ProfileModificationRequestConfigProfileDto(BaseModel):
+    active_config_profile_uuid: UUID = Field(..., alias="activeConfigProfileUuid")
+    active_inbounds: list[UUID] = Field(..., alias="activeInbounds")
 
 
 class ProfileModificationRequestDto(BaseModel):
-    """Request to modify profiles for multiple nodes"""
-    uuids: List[str] = Field(min_length=1)
-    config_profile: ConfigProfileData = Field(alias="configProfile")
+    uuids: list[UUID]
+    config_profile: ProfileModificationRequestConfigProfileDto = Field(
+        ..., serialization_alias="configProfile"
+    )
 
 
-class ProfileModificationResponseData(BaseModel):
-    """Profile modification response data"""
-    event_sent: bool = Field(alias="eventSent")
+class BulkNodesActionsRequestDto(BaseModel):
+    uuids: list[UUID]
+    action: Literal["ENABLE", "DISABLE", "RESTART", "RESET_TRAFFIC"]
 
 
-class ProfileModificationResponseDto(ProfileModificationResponseData):
-    """Profile modification response"""
-    pass
-
-# Для обратной совместимости
-RestartAllNodesRequestDto = RestartAllNodesRequestBodyDto
-NodesResponseDto = NodeResponseDto
-
-
-NodeBulkActionType = Literal["ENABLE", "DISABLE", "RESTART", "RESET_TRAFFIC"]
-
-
-class NodesBulkActionsRequestDto(BaseModel):
-    """Request for performing bulk actions on nodes"""
-    uuids: List[UUID] = Field(min_length=1)
-    action: NodeBulkActionType = Field(description="Action to perform on nodes")
+class NodeFieldsDto(BaseModel):
+    country_code: str | None = Field(None, alias="countryCode")
+    consumption_multiplier: float | None = Field(None, alias="consumptionMultiplier")
+    node_consumption_multiplier: float | None = Field(
+        None, alias="nodeConsumptionMultiplier"
+    )
+    provider_uuid: UUID | None = Field(None, alias="providerUuid")
+    tags: list[str] | None = None
+    active_plugin_uuid: UUID | None = Field(None, alias="activePluginUuid")
+    note: str | None = None
 
 
-class NodesBulkActionsResponseDto(BaseModel):
-    """Response after performing bulk actions on nodes"""
-    event_sent: bool = Field(alias="eventSent")
-
-
-class BulkNodesUpdateRequestDto(NodesBulkActionsRequestDto):
-    """OpenAPI alias for bulk nodes update request"""
-    pass
-
-
-class BulkNodesUpdateResponseDto(NodesBulkActionsResponseDto):
-    """OpenAPI alias for bulk nodes update response"""
-    pass
+class BulkNodesUpdateRequestDto(BaseModel):
+    uuids: list[UUID]
+    fields: NodeFieldsDto

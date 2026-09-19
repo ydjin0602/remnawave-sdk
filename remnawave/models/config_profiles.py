@@ -1,88 +1,101 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field
 
 
-class InboundDto(BaseModel):
+class InboundsDto(BaseModel):
     uuid: UUID
-    profile_uuid: UUID = Field(alias="profileUuid")
+    profile_uuid: UUID = Field(..., alias="profileUuid")
     tag: str
     type: str
-    network: Optional[str] = None
-    security: Optional[str] = None
-    port: Optional[float] = None
-    raw_inbound: Optional[Any] = Field(None, alias="rawInbound")
+    network: str | None = None
+    security: str | None = None
+    port: float | None = None
+    raw_inbound: Any | None = Field(None, alias="rawInbound")
 
-class NodesProfileDto(BaseModel):
+
+class ConfigProfileNodesDto(BaseModel):
     uuid: UUID
     name: str
-    country_code: str = Field(alias="countryCode")
+    country_code: str = Field(..., alias="countryCode")
 
-class ConfigProfileDto(BaseModel):
+
+class ConfigProfilesDto(BaseModel):
     uuid: UUID
+    view_position: int = Field(..., alias="viewPosition")
     name: str
-    view_position: int = Field(alias="viewPosition")
-    config: Dict[str, Any]
-    inbounds: List[InboundDto]
-    nodes: List[NodesProfileDto] = []
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
+    config: Any
+    inbounds: list[InboundsDto]
+    nodes: list[ConfigProfileNodesDto]
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+
+
+class GetAllConfigProfilesResponseDto(BaseModel):
+    total: float
+    config_profiles: list[ConfigProfilesDto] = Field(..., alias="configProfiles")
+
+
+class GetAllInboundsResponseInboundsDto(BaseModel):
+    uuid: UUID
+    profile_uuid: UUID = Field(..., alias="profileUuid")
+    tag: str
+    type: str
+    network: str | None = None
+    security: str | None = None
+    port: float | None = None
+    raw_inbound: Any | None = Field(None, alias="rawInbound")
+    active_squads: list[UUID] = Field(..., alias="activeSquads")
+
+
+class GetAllInboundsResponseDto(BaseModel):
+    total: float
+    inbounds: list[GetAllInboundsResponseInboundsDto]
+
+
+class GetInboundsByProfileUuidResponseDto(GetAllInboundsResponseDto):
+    """Alias of GetAllInboundsResponseDto (envelope unwrapped)."""
+
+
+class GetConfigProfileByUuidResponseDto(ConfigProfilesDto):
+    """Alias of ConfigProfilesDto (envelope unwrapped)."""
+
+
+class GetComputedConfigProfileByUuidResponseDto(ConfigProfilesDto):
+    """Alias of ConfigProfilesDto (envelope unwrapped)."""
 
 
 class CreateConfigProfileRequestDto(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]
-    config: Dict[str, Any]
+    name: str
+    config: dict[str, Any]
 
 
-class CreateConfigProfileResponseDto(ConfigProfileDto):
-    pass
+class CreateConfigProfileResponseDto(ConfigProfilesDto):
+    """Alias of ConfigProfilesDto (envelope unwrapped)."""
 
 
 class UpdateConfigProfileRequestDto(BaseModel):
     uuid: UUID
-    name: Optional[Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]] = None
-    config: Optional[Dict[str, Any]] = None
+    name: str | None = None
+    config: dict[str, Any] | None = None
 
 
-class UpdateConfigProfileResponseDto(ConfigProfileDto):
-    pass
-
-
-class GetAllConfigProfilesResponsePaginated(BaseModel):
-    total: float
-    config_profiles: List[ConfigProfileDto] = Field(alias="configProfiles")
-
-
-class GetAllConfigProfilesResponseDto(GetAllConfigProfilesResponsePaginated):
-    pass
-
-
-class GetConfigProfileByUuidResponseDto(ConfigProfileDto):
-    pass
-
-
-class DeleteConfigProfileResponseDto(BaseModel):
-    is_deleted: bool = Field(alias="isDeleted")
-
-
-class GetAllInboundsResponseDto(List[InboundDto]):
-    pass
-
-
-class GetInboundsByProfileUuidResponseDto(List[InboundDto]):
-    pass
+class UpdateConfigProfileResponseDto(ConfigProfilesDto):
+    """Alias of ConfigProfilesDto (envelope unwrapped)."""
 
 
 class ReorderConfigProfileItem(BaseModel):
-    view_position: int = Field(serialization_alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     uuid: UUID
 
 
 class ReorderConfigProfilesRequestDto(BaseModel):
-    items: List[ReorderConfigProfileItem]
+    items: list[ReorderConfigProfileItem]
 
 
-class ReorderConfigProfilesResponseDto(GetAllConfigProfilesResponsePaginated):
-    pass
+class ReorderConfigProfilesResponseDto(GetAllConfigProfilesResponseDto):
+    """Alias of GetAllConfigProfilesResponseDto (envelope unwrapped)."""

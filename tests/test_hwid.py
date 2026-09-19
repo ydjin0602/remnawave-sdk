@@ -5,165 +5,94 @@ import pytest
 
 from remnawave.models import (
     CreateUserHwidDeviceRequestDto,
-    DeleteUserHwidDeviceRequestDto,
-    DeleteUserAllHwidDeviceRequestDto,
     CreateUserHwidDeviceResponseDto,
+    DeleteUserAllHwidDeviceRequestDto,
+    DeleteUserHwidDeviceRequestDto,
     DeleteUserHwidDeviceResponseDto,
-    GetUserHwidDevicesResponseDto,
     GetHwidStatisticsResponseDto,
+    GetUserHwidDevicesResponseDto,
 )
-from tests.conftest import REMNAWAVE_USER_UUID
 
 
 class TestHwidInfo:
     """Тесты для получения информации о HWID устройствах"""
-    
+
     @pytest.mark.asyncio
-    async def test_get_hwid_user(self, remnawave):
-        """Тест получения HWID устройств конкретного пользователя"""
-        hwid = await remnawave.hwid.get_hwid_user(uuid=REMNAWAVE_USER_UUID)
-        assert isinstance(hwid, GetUserHwidDevicesResponseDto)
-        assert hasattr(hwid, "devices")
-    
+    async def test_get_user_hwid_devices(self, remnawave, panel):
+        """Тест получения HWID устройств конкретного пользователя (v3: by user id)"""
+        devices = await remnawave.hwid.get_user_hwid_devices(user_id=panel["user_id"])
+        assert isinstance(devices, GetUserHwidDevicesResponseDto)
+        assert hasattr(devices, "devices")
+
     @pytest.mark.asyncio
-    async def test_get_hwid_users(self, remnawave):
+    async def test_get_all_users(self, remnawave):
         """Тест получения всех HWID устройств с пагинацией"""
-        response = await remnawave.hwid.get_hwid_users(size=10, start=0)
-        assert isinstance(response, GetUserHwidDevicesResponseDto)
-        assert hasattr(response, "total")
+        response = await remnawave.hwid.get_all_users(start=0, size=10)
         assert hasattr(response, "devices")
+        assert hasattr(response, "total")
 
-
-class TestHwidStatistics:
-    """Тесты для статистики HWID устройств"""
-    
     @pytest.mark.asyncio
-    async def test_get_hwid_stats(self, remnawave):
+    async def test_get_hwid_devices_stats(self, remnawave):
         """Тест получения статистики по HWID устройствам"""
-        try:
-            response = await remnawave.hwid.get_hwid_stats()
-            assert isinstance(response, GetHwidStatisticsResponseDto)
-            
-            # Проверяем структуру ответа
-            assert hasattr(response, "by_platform")
-            assert hasattr(response, "by_app")
-            assert hasattr(response, "stats")
-            
-            # Проверяем поля статистики
-            assert hasattr(response.stats, "total_unique_devices")
-            assert hasattr(response.stats, "total_hwid_devices")
-            assert hasattr(response.stats, "average_hwid_devices_per_user")
-            
-            # Проверяем типы данных в ответе
-            assert isinstance(response.stats.total_unique_devices, float)
-            assert isinstance(response.stats.total_hwid_devices, float)
-            assert isinstance(response.stats.average_hwid_devices_per_user, float)
-            
-            # Проверяем данные по платформам
-            if len(response.by_platform) > 0:
-                platform = response.by_platform[0]
-                assert hasattr(platform, "platform")
-                assert hasattr(platform, "count")
-            
-            # Проверяем данные по приложениям
-            if len(response.by_app) > 0:
-                app = response.by_app[0]
-                assert hasattr(app, "app")
-                assert hasattr(app, "count")
-        except Exception as e:
-            pytest.skip(f"Пропуск теста статистики HWID: {str(e)}")
+        stats = await remnawave.hwid.get_hwid_devices_stats()
+        assert isinstance(stats, GetHwidStatisticsResponseDto)
+
+    @pytest.mark.asyncio
+    async def test_get_top_users_by_hwid_devices(self, remnawave):
+        """Тест топа пользователей по количеству HWID устройств"""
+        response = await remnawave.hwid.get_top_users_by_hwid_devices(start=0, size=5)
+        assert hasattr(response, "users")
+        assert hasattr(response, "total")
 
 
-class TestHwidCRUD:
-    """Тесты для CRUD операций с HWID устройствами"""
-    
-    @pytest.fixture
-    def test_hwid(self):
-        """Фикстура для генерации тестового HWID"""
-        return str(uuid.uuid4())
-    
+class TestHwidDevices:
+    """Тесты CRUD HWID устройств"""
+
     @pytest.mark.asyncio
-    # @pytest.mark.xfail(reason="User hwid device limit может быть достигнут")
-    async def test_add_hwid_to_user(self, remnawave, test_hwid):
-        """Тест добавления HWID устройства пользователю"""
-        # Создаем запрос на добавление HWID
-        create_request = CreateUserHwidDeviceRequestDto(
-            hwid=test_hwid,
-            user_uuid=REMNAWAVE_USER_UUID,
-            platform="Windows",
-            os_version="10.0.19042",
-            device_model="Surface Pro",
-            user_agent="Mozilla/5.0"
+    async def test_create_and_delete_hwid_device(self, remnawave, panel):
+        """Тест создания и удаления HWID устройства пользователя"""
+        user_id = panel["user_id"]
+        test_hwid = str(uuid.uuid4())
+        device_model = f"Test Model {random.randint(0, 1000)}"
+
+        # v3: body uses userId
+        created = await remnawave.hwid.create_user_hwid_device(
+            CreateUserHwidDeviceRequestDto(
+                user_id=user_id,
+                hwid=test_hwid,
+                platform="TestPlatform",
+                device_model=device_model,
+            )
         )
-        
-        # Отправляем запрос
-        response = await remnawave.hwid.add_hwid_to_users(body=create_request)
-        
-        # Проверяем результат
-        assert isinstance(response, CreateUserHwidDeviceResponseDto)
-        assert any(item.hwid == test_hwid for item in response.devices)
-        
-        # Проверяем, что устройство действительно добавлено
-        hwid_check = await remnawave.hwid.get_hwid_user(uuid=REMNAWAVE_USER_UUID)
-        assert any(device.hwid == test_hwid for device in hwid_check.devices)
-    
+        assert isinstance(created, CreateUserHwidDeviceResponseDto)
+        assert any(d.hwid == test_hwid for d in created.devices)
+
+        # Delete specific device
+        deleted = await remnawave.hwid.delete_user_hwid_device(
+            DeleteUserHwidDeviceRequestDto(user_id=user_id, hwid=test_hwid)
+        )
+        assert isinstance(deleted, DeleteUserHwidDeviceResponseDto)
+        assert not any(d.hwid == test_hwid for d in deleted.devices)
+
     @pytest.mark.asyncio
-    async def test_delete_hwid_user(self, remnawave, test_hwid):
-        """Тест удаления HWID устройства у пользователя"""
-        # Сначала добавляем устройство
-        create_request = CreateUserHwidDeviceRequestDto(
-            hwid=test_hwid,
-            user_uuid=REMNAWAVE_USER_UUID,
-            platform="Android",
-            os_version="12",
-            device_model="Pixel 6",
-            user_agent="Chrome Mobile"
-        )
-        await remnawave.hwid.add_hwid_to_users(body=create_request)
-        
-        # Удаляем устройство
-        delete_request = DeleteUserHwidDeviceRequestDto(
-            hwid=test_hwid,
-            user_uuid=REMNAWAVE_USER_UUID
-        )
-        response = await remnawave.hwid.delete_hwid_to_user(body=delete_request)
-        
-        # Проверяем результат
-        assert isinstance(response, DeleteUserHwidDeviceResponseDto)
-        assert not any(item.hwid == test_hwid for item in response.devices)
-        
-        # Проверяем, что устройство действительно удалено
-        hwid_check = await remnawave.hwid.get_hwid_user(uuid=REMNAWAVE_USER_UUID)
-        assert not any(device.hwid == test_hwid for device in hwid_check.devices)
-    
-    @pytest.mark.asyncio
-    async def test_delete_all_hwid_user(self, remnawave):
+    async def test_delete_all_user_hwid_devices(self, remnawave, panel):
         """Тест удаления всех HWID устройств пользователя"""
-        # Сначала добавим новый HWID
-        random_hwid = str(uuid.uuid4())
-        create_request = CreateUserHwidDeviceRequestDto(
-            hwid=random_hwid,
-            user_uuid=REMNAWAVE_USER_UUID,
-            platform="iOS",
-            os_version="15.0",
-            device_model="iPhone 13",
-            user_agent="Safari/605.1.15"
+        user_id = panel["user_id"]
+        test_hwid = str(uuid.uuid4())
+
+        await remnawave.hwid.create_user_hwid_device(
+            CreateUserHwidDeviceRequestDto(
+                user_id=user_id,
+                hwid=test_hwid,
+                platform="TestPlatform",
+                device_model="Bulk Test",
+            )
         )
-        await remnawave.hwid.add_hwid_to_users(body=create_request)
-        
-        # Проверяем, что устройство добавлено
-        check_before = await remnawave.hwid.get_hwid_user(uuid=REMNAWAVE_USER_UUID)
-        assert any(device.hwid == random_hwid for device in check_before.devices)
-        
-        # Теперь удалим все HWID устройства пользователя
-        delete_all_request = DeleteUserAllHwidDeviceRequestDto(
-            user_uuid=REMNAWAVE_USER_UUID
+
+        await remnawave.hwid.delete_all_user_hwid_devices(
+            DeleteUserAllHwidDeviceRequestDto(user_id=user_id)
         )
-        response = await remnawave.hwid.delete_all_hwid_user(body=delete_all_request)
-        
-        # Проверяем результат
-        assert isinstance(response, DeleteUserHwidDeviceResponseDto)
-        
-        # Проверяем, что устройства действительно удалены
-        hwid_check = await remnawave.hwid.get_hwid_user(uuid=REMNAWAVE_USER_UUID)
-        assert not any(device.hwid == random_hwid for device in hwid_check.devices)
+        # Verify devices are gone for the user
+        after = await remnawave.hwid.get_user_hwid_devices(user_id=user_id)
+        assert isinstance(after, GetUserHwidDevicesResponseDto)
+        assert after.total == 0

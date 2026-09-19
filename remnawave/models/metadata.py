@@ -1,41 +1,29 @@
-"""Metadata management models for Users and Nodes"""
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
 
-from typing import Any, Dict, Optional
-from uuid import UUID
+from typing import Any
 
-from pydantic import BaseModel, Field
-
-
-class GetMetadataResponseDto(BaseModel):
-    """Get metadata response"""
-    metadata: Optional[Dict[str, Any]] = None
+from pydantic import BaseModel
 
 
 class GetUserMetadataResponseDto(BaseModel):
-    """Get user metadata response"""
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any]
 
 
 class UpsertUserMetadataRequestBodyDto(BaseModel):
-    """Request body for upserting user metadata"""
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
-class UpsertUserMetadataResponseDto(BaseModel):
-    """Response for upserting user metadata"""
-    metadata: Dict[str, Any]
+class UpsertUserMetadataResponseDto(GetUserMetadataResponseDto):
+    """Alias of GetUserMetadataResponseDto (envelope unwrapped)."""
 
 
-class GetNodeMetadataResponseDto(BaseModel):
-    """Get node metadata response"""
-    metadata: Optional[Dict[str, Any]] = None
+class GetNodeMetadataResponseDto(GetUserMetadataResponseDto):
+    """Alias of GetUserMetadataResponseDto (envelope unwrapped)."""
 
 
 class UpsertNodeMetadataRequestBodyDto(BaseModel):
-    """Request body for upserting node metadata"""
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
-class UpsertNodeMetadataResponseDto(BaseModel):
-    """Response for upserting node metadata"""
-    metadata: Dict[str, Any]
+class UpsertNodeMetadataResponseDto(GetUserMetadataResponseDto):
+    """Alias of GetUserMetadataResponseDto (envelope unwrapped)."""

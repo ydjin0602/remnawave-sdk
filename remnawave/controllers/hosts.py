@@ -1,74 +1,60 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from rapid_api_client import Path
 from rapid_api_client.annotations import PydanticBody
 
 from remnawave.models import (
     CreateHostRequestDto,
-    CreateHostResponseDto,
-    DeleteHostResponseDto,
     GetAllHostsResponseDto,
-    GetOneHostResponseDto,
-    ReorderHostRequestDto,
-    ReorderHostResponseDto,
-    UpdateHostRequestDto,
-    UpdateHostResponseDto,
     GetAllHostTagsResponseDto,
+    HostResponseDto,
+    ReorderHostRequestDto,
+    ReorderHostsResponseDto,
+    UpdateHostRequestDto,
 )
-from remnawave.rapid import AttributeBody, BaseController, delete, get, post, patch
+from remnawave.rapid import BaseController, delete, get, patch, post
 
 
 class HostsController(BaseController):
-    @post("/hosts", response_class=CreateHostResponseDto)
+    @post("/hosts", response_class=HostResponseDto)
     async def create_host(
         self,
         body: Annotated[CreateHostRequestDto, PydanticBody()],
-    ) -> CreateHostResponseDto:
-        """Create Host"""
-        ...
+    ) -> HostResponseDto:
+        """Create a new host"""
 
-    @patch("/hosts", response_class=UpdateHostResponseDto)
+    @patch("/hosts", response_class=HostResponseDto)
     async def update_host(
         self,
         body: Annotated[UpdateHostRequestDto, PydanticBody()],
-    ) -> UpdateHostResponseDto:
-        """Update Host"""
-        ...
+    ) -> HostResponseDto:
+        """Update host"""
 
     @get("/hosts", response_class=GetAllHostsResponseDto)
-    async def get_all_hosts(
-        self,
-    ) -> GetAllHostsResponseDto:
-        """Get All Hosts"""
-        ...
+    async def get_all_hosts(self) -> GetAllHostsResponseDto:
+        """Get all hosts"""
 
     @get("/hosts/tags", response_class=GetAllHostTagsResponseDto)
-    async def get_hosts_tags(
-        self,
-    ) -> GetAllHostTagsResponseDto:
-        """Get Hosts Tags"""
-        ...
+    async def get_hosts_tags(self) -> GetAllHostTagsResponseDto:
+        """Get all hosts tags"""
 
-    @delete("/hosts/{uuid}", response_class=DeleteHostResponseDto)
-    async def delete_host(
-        self,
-        uuid: Annotated[str, Path(description="UUID of the host")],
-    ) -> DeleteHostResponseDto:
-        """Delete Host"""
-        ...
-
-    @get("/hosts/{uuid}", response_class=GetOneHostResponseDto)
+    @get("/hosts/{uuid}", response_class=HostResponseDto)
     async def get_one_host(
         self,
         uuid: Annotated[str, Path(description="UUID of the host")],
-    ) -> GetOneHostResponseDto:
-        """Get One Host"""
-        ...
+    ) -> HostResponseDto:
+        """Get host by UUID"""
 
-    @post("/hosts/actions/reorder", response_class=ReorderHostResponseDto)
+    @delete("/hosts/{uuid}", response_class=None)
+    async def delete_host(
+        self,
+        uuid: Annotated[str, Path(description="UUID of the host")],
+    ) -> None:
+        """Delete host by UUID"""
+
+    @post("/hosts/actions/reorder", response_class=ReorderHostsResponseDto)
     async def reorder_hosts(
         self,
         body: Annotated[ReorderHostRequestDto, PydanticBody()],
-    ) -> ReorderHostResponseDto:
-        """Reorder Hosts"""
-        ...
+    ) -> ReorderHostsResponseDto:
+        """Reorder hosts"""

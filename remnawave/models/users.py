@@ -1,30 +1,44 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Annotated, List, Literal, Optional
+from typing import Literal
 from uuid import UUID
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-    RootModel,
-    StringConstraints,
-)
+from pydantic import BaseModel, EmailStr, Field
 
 from remnawave.enums import TrafficLimitStrategy, UserStatus
 from remnawave.utils.happ_crypt import create_happ_crypto_link
 
 
-class UserActiveInboundsDto(BaseModel):
-    uuid: UUID
-    tag: str
-    type: str
-    network: str | None = None
-    security: str | None = None
-
-
-class UserLastConnectedNodeDto(BaseModel):
-    connected_at: datetime = Field(alias="connectedAt")
-    node_name: str = Field(alias="nodeName")
+class CreateUserRequestDto(BaseModel):
+    username: str
+    status: UserStatus | None = None
+    short_uuid: str | None = Field(None, serialization_alias="shortUuid")
+    trojan_password: str | None = Field(None, serialization_alias="trojanPassword")
+    vless_uuid: UUID | None = Field(None, serialization_alias="vlessUuid")
+    ss_password: str | None = Field(None, serialization_alias="ssPassword")
+    traffic_limit_bytes: float | None = Field(
+        None, serialization_alias="trafficLimitBytes"
+    )
+    traffic_limit_strategy: TrafficLimitStrategy | None = Field(
+        None, serialization_alias="trafficLimitStrategy"
+    )
+    expire_at: datetime = Field(..., serialization_alias="expireAt")
+    created_at: datetime | None = Field(None, serialization_alias="createdAt")
+    last_traffic_reset_at: datetime | None = Field(
+        None, serialization_alias="lastTrafficResetAt"
+    )
+    description: str | None = None
+    tag: str | None = None
+    telegram_id: int | None = Field(None, serialization_alias="telegramId")
+    email: EmailStr | None = None
+    hwid_device_limit: int | None = Field(None, serialization_alias="hwidDeviceLimit")
+    active_internal_squads: list[UUID] | None = Field(
+        None, serialization_alias="activeInternalSquads"
+    )
+    external_squad_uuid: UUID | None = Field(
+        None, serialization_alias="externalSquadUuid"
+    )
 
 
 class ActiveInternalSquadDto(BaseModel):
@@ -32,361 +46,198 @@ class ActiveInternalSquadDto(BaseModel):
     name: str
 
 
-class HappCrypto(BaseModel):
-    crypto_link: str = Field(alias="cryptoLink")
-
-
-class CreateUserRequestDto(BaseModel):
-    """Request DTO for creating a user"""
-    # Required fields
-    username: Annotated[
-        str, 
-        StringConstraints(pattern=r"^[a-zA-Z0-9_-]+$", min_length=3, max_length=36)
-    ] = Field(..., description="Unique username for the user")
-    expire_at: datetime = Field(..., serialization_alias="expireAt", description="Account expiration date")
-    
-    # Optional fields with defaults
-    status: UserStatus = Field(default=UserStatus.ACTIVE, description="User account status")
-    traffic_limit_strategy: TrafficLimitStrategy = Field(
-        default=TrafficLimitStrategy.NO_RESET,
-        serialization_alias="trafficLimitStrategy",
-        description="Traffic reset strategy"
-    )
-    
-    # Optional fields
-    short_uuid: Optional[str] = Field(None, serialization_alias="shortUuid")
-    trojan_password: Optional[Annotated[str, StringConstraints(min_length=8, max_length=32)]] = Field(
-        None, serialization_alias="trojanPassword"
-    )
-    vless_uuid: Optional[UUID] = Field(None, serialization_alias="vlessUuid")
-    ss_password: Optional[Annotated[str, StringConstraints(min_length=8, max_length=32)]] = Field(
-        None, serialization_alias="ssPassword"
-    )
-    traffic_limit_bytes: Optional[float] = Field(
-        None, serialization_alias="trafficLimitBytes", ge=0
-    )
-    created_at: Optional[datetime] = Field(None, serialization_alias="createdAt")
-    last_traffic_reset_at: Optional[datetime] = Field(None, serialization_alias="lastTrafficResetAt")
-    description: Optional[str] = None
-    tag: Optional[Annotated[str, StringConstraints(max_length=16, pattern=r"^[A-Z0-9_]+$")]] = None
-    telegram_id: Optional[int] = Field(None, serialization_alias="telegramId")
-    email: Optional[EmailStr] = None
-    hwid_device_limit: Optional[int] = Field(None, serialization_alias="hwidDeviceLimit", ge=0)
-    active_internal_squads: Optional[List[UUID]] = Field(None, serialization_alias="activeInternalSquads")
-    uuid: Optional[UUID] = Field(
-        None, 
-        description="Optional. Pass UUID to create user with specific UUID, otherwise it will be generated automatically."
-    )
-    external_squad_uuid: Optional[UUID] = Field(None, serialization_alias="externalSquadUuid")
-
-
-class UpdateUserRequestDto(BaseModel):
-    """Request DTO for updating a user"""
-    # Either username or uuid must be provided, uuid has priority
-    username: Optional[str] = Field(None, description="Username of the user")
-    uuid: Optional[UUID] = Field(
-        None, 
-        description="UUID of the user. UUID has higher priority than username"
-    )
-    
-    # Optional update fields
-    status: Optional[UserStatus] = None
-    description: Optional[str] = None
-    email: Optional[EmailStr] = None
-    expire_at: Optional[datetime] = Field(None, serialization_alias="expireAt")
-    hwid_device_limit: Optional[int] = Field(None, serialization_alias="hwidDeviceLimit", ge=0)
-    tag: Optional[Annotated[str, StringConstraints(max_length=16, pattern=r"^[A-Z0-9_]+$")]] = None
-    telegram_id: Optional[int] = Field(None, serialization_alias="telegramId")
-    traffic_limit_bytes: Optional[float] = Field(None, serialization_alias="trafficLimitBytes", ge=0)
-    traffic_limit_strategy: Optional[TrafficLimitStrategy] = Field(
-        None, serialization_alias="trafficLimitStrategy"
-    )
-    active_internal_squads: Optional[List[UUID]] = Field(
-        None, serialization_alias="activeInternalSquads"
-    )
-    external_squad_uuid: Optional[UUID] = Field(None, serialization_alias="externalSquadUuid")
-
-
-class UserTrafficDto(BaseModel):
-    """User traffic information"""
-    used_traffic_bytes: float = Field(alias="usedTrafficBytes")
-    lifetime_used_traffic_bytes: float = Field(alias="lifetimeUsedTrafficBytes")
-    online_at: Optional[datetime] = Field(None, alias="onlineAt")
-    first_connected_at: Optional[datetime] = Field(None, alias="firstConnectedAt")
-    last_connected_node_uuid: Optional[UUID] = Field(None, alias="lastConnectedNodeUuid")
+class UserUserTrafficDto(BaseModel):
+    used_traffic_bytes: float = Field(..., alias="usedTrafficBytes")
+    lifetime_used_traffic_bytes: float = Field(..., alias="lifetimeUsedTrafficBytes")
+    online_at: datetime | None = Field(None, alias="onlineAt")
+    first_connected_at: datetime | None = Field(None, alias="firstConnectedAt")
+    last_connected_node_uuid: UUID | None = Field(None, alias="lastConnectedNodeUuid")
 
 
 class UserResponseDto(BaseModel):
-    """User response DTO - обновленная структура с userTraffic"""
-    # uuid: UUID
     id: int
-    short_uuid: str = Field(alias="shortUuid")
+    short_uuid: str = Field(..., alias="shortUuid")
     username: str
-    status: UserStatus = Field(default=UserStatus.ACTIVE)
-    traffic_limit_bytes: float = Field(0, alias="trafficLimitBytes")
+    status: UserStatus
+    traffic_limit_bytes: float = Field(..., alias="trafficLimitBytes")
     traffic_limit_strategy: TrafficLimitStrategy = Field(
-        TrafficLimitStrategy.NO_RESET, alias="trafficLimitStrategy"
+        ..., alias="trafficLimitStrategy"
     )
-    expire_at: datetime = Field(alias="expireAt")
-    telegram_id: Optional[int] = Field(None, alias="telegramId")
-    email: Optional[str] = None
-    description: Optional[str] = None
-    tag: Optional[str] = None
-    hwid_device_limit: Optional[int] = Field(None, alias="hwidDeviceLimit")
-    external_squad_uuid: Optional[UUID] = Field(None, alias="externalSquadUuid")
-    trojan_password: str = Field(alias="trojanPassword")
-    vless_uuid: UUID = Field(alias="vlessUuid")
-    ss_password: str = Field(alias="ssPassword")
-    last_trigger_threshold: int = Field(0, alias="lastTriggeredThreshold")
-    sub_revoked_at: Optional[datetime] = Field(None, alias="subRevokedAt")
-    sub_last_user_agent: Optional[str] = Field(None, alias="subLastUserAgent")
-    sub_last_opened_at: Optional[datetime] = Field(None, alias="subLastOpenedAt")
-    last_traffic_reset_at: Optional[datetime] = Field(None, alias="lastTrafficResetAt")
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
-    subscription_url: str = Field(alias="subscriptionUrl")
-    active_internal_squads: list[ActiveInternalSquadDto] = Field(alias="activeInternalSquads")
-    user_traffic: UserTrafficDto = Field(alias="userTraffic")
-    
-    @property
-    def used_traffic_bytes(self) -> float:
-        """Backward compatibility property"""
-        return self.user_traffic.used_traffic_bytes
-    
-    @property
-    def lifetime_used_traffic_bytes(self) -> float:
-        """Backward compatibility property"""
-        return self.user_traffic.lifetime_used_traffic_bytes
-    
-    @property
-    def online_at(self) -> Optional[datetime]:
-        """Backward compatibility property"""
-        return self.user_traffic.online_at
-    
-    @property
-    def first_connected(self) -> Optional[datetime]:
-        """Backward compatibility property"""
-        return self.user_traffic.first_connected_at
-    
-    @property
-    def last_connected_node_uuid(self) -> Optional[UUID]:
-        """Backward compatibility property"""
-        return self.user_traffic.last_connected_node_uuid
-    
-    @property
-    def happ(self) -> HappCrypto:
-        """Generate Happ Crypto Link"""
-        crypto_link = create_happ_crypto_link(self.subscription_url)
-        return HappCrypto(cryptoLink=crypto_link)
-    
-    def happ_with_version(self, version: Literal["v3", "v4"] = "v4") -> HappCrypto:
-        return self._generate_happ(version=version)
-
-    def _generate_happ(self, version):
-        crypto_link = create_happ_crypto_link(content=self.subscription_url, method=version)
-        return HappCrypto(cryptoLink=crypto_link)
-
-
-class RevokeUserRequestDto(BaseModel):
-    """Request DTO for revoking user subscription"""
-    short_uuid: Optional[str] = Field(
-        None,
-        serialization_alias="shortUuid",
-        description="Optional. If not provided, a new short UUID will be generated by Remnawave.",
-        min_length=6,
-        max_length=48,
-        pattern=r"^[a-zA-Z0-9_-]+$",
+    expire_at: datetime = Field(..., alias="expireAt")
+    telegram_id: int | None = Field(None, alias="telegramId")
+    email: str | None = None
+    description: str | None = None
+    tag: str | None = None
+    hwid_device_limit: int | None = Field(None, alias="hwidDeviceLimit")
+    external_squad_uuid: UUID | None = Field(None, alias="externalSquadUuid")
+    trojan_password: str = Field(..., alias="trojanPassword")
+    vless_uuid: UUID = Field(..., alias="vlessUuid")
+    ss_password: str = Field(..., alias="ssPassword")
+    last_triggered_threshold: int = Field(..., alias="lastTriggeredThreshold")
+    sub_revoked_at: datetime | None = Field(None, alias="subRevokedAt")
+    last_traffic_reset_at: datetime | None = Field(None, alias="lastTrafficResetAt")
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    subscription_url: str = Field(..., alias="subscriptionUrl")
+    active_internal_squads: list[ActiveInternalSquadDto] = Field(
+        ..., alias="activeInternalSquads"
     )
-    revoke_only_passwords: Optional[bool] = Field(
-        None,
-        serialization_alias="revokeOnlyPasswords",
-        description="Optional. If true, only passwords will be revoked without changing the short UUID.",
+    user_traffic: UserUserTrafficDto = Field(..., alias="userTraffic")
+
+
+class UpdateUserRequestDto(BaseModel):
+    username: str | None = None
+    id: int | None = None
+    status: Literal["ACTIVE", "DISABLED"] | None = None
+    traffic_limit_bytes: float | None = Field(
+        None, serialization_alias="trafficLimitBytes"
+    )
+    traffic_limit_strategy: TrafficLimitStrategy | None = Field(
+        None, serialization_alias="trafficLimitStrategy"
+    )
+    expire_at: datetime | None = Field(None, serialization_alias="expireAt")
+    description: str | None = None
+    tag: str | None = None
+    telegram_id: int | None = Field(None, serialization_alias="telegramId")
+    email: EmailStr | None = None
+    hwid_device_limit: int | None = Field(None, serialization_alias="hwidDeviceLimit")
+    active_internal_squads: list[UUID] | None = Field(
+        None, serialization_alias="activeInternalSquads"
+    )
+    external_squad_uuid: UUID | None = Field(
+        None, serialization_alias="externalSquadUuid"
     )
 
-class ResolveUserRequestBodyDto(BaseModel):
-    """Request DTO for resolving a user by any identifier"""
-    uuid: Optional[UUID] = None
-    id: Optional[int] = None
-    short_uuid: Optional[str] = Field(None, serialization_alias="shortUuid")
-    username: Optional[str] = None
 
-
-class ResolveUserResponseDto(BaseModel):
-    """Response DTO for resolved user"""
-    uuid: UUID
-    username: str
-    id: int
-    short_uuid: str = Field(alias="shortUuid")
-
-
-class SubscriptionRequestRecord(BaseModel):
-    """Subscription request history record"""
-    id: int
-    user_uuid: UUID = Field(alias="userUuid")
-    request_at: datetime = Field(alias="requestAt")
-    request_ip: Optional[str] = Field(alias="requestIp")
-    user_agent: Optional[str] = Field(alias="userAgent")
-
-
-class SubscriptionRequestsResponseData(BaseModel):
-    """Subscription requests response data"""
-    total: int
-    records: List[SubscriptionRequestRecord]
-
-
-class CreateUserResponseDto(UserResponseDto):
-    """Response for create user"""
-    pass
-
-
-class UpdateUserResponseDto(UserResponseDto):
-    """Response for update user"""
-    pass
-
-
-class GetUserByUuidResponseDto(UserResponseDto):
-    """Response for get user by UUID"""
-    pass
-
-
-class GetUserByShortUuidResponseDto(UserResponseDto):
-    """Response for get user by short UUID"""
-    pass
-
-
-class GetUserByUsernameResponseDto(UserResponseDto):
-    """Response for get user by username"""
-    pass
-
-
-class GetUserByIdResponseDto(UserResponseDto):
-    """Response for get user by ID"""
-    pass
-
-
-class DisableUserResponseDto(UserResponseDto):
-    """Response for disable user"""
-    pass
-
-
-class EnableUserResponseDto(UserResponseDto):
-    """Response for enable user"""
-    pass
-
-
-class ResetUserTrafficResponseDto(UserResponseDto):
-    """Response for reset user traffic"""
-    pass
-
-
-class RevokeUserSubscriptionResponseDto(UserResponseDto):
-    """Response for revoke user subscription"""
-    pass
-
-
-class ActivateAllInboundsResponseDto(UserResponseDto):
-    """Response for activate all inbounds"""
-    pass
-
-
-class UsersResponseDto(BaseModel):
-    """Users collection response"""
+class GetAllUsersResponseDto(BaseModel):
     users: list[UserResponseDto]
-    total: int
+    total: float
 
 
-class GetAllUsersResponseDto(UsersResponseDto):
-    """Response for get all users"""
-    pass
-
-
-class UsersStreamData(BaseModel):
-    """Cursor-based (keyset) users stream page"""
+class GetUsersStreamResponseDto(BaseModel):
     users: list[UserResponseDto]
-    next_cursor: Optional[str] = Field(
-        None,
-        alias="nextCursor",
-        description="Cursor to fetch the next page, or null if there are no more results",
-    )
-    has_more: bool = Field(alias="hasMore", description="Whether there are more results to fetch")
+    next_cursor: str | None = Field(None, alias="nextCursor")
+    has_more: bool = Field(..., alias="hasMore")
 
 
-class GetUsersStreamResponseDto(UsersStreamData):
-    """Response for get all users using cursor-based (keyset) pagination"""
-    pass
-
-
-class TagsResponseDto(BaseModel):
-    """Tags collection response"""
+class GetAllTagsResponseDto(BaseModel):
     tags: list[str]
 
 
-class GetAllTagsResponseDto(TagsResponseDto):
-    """Response for get all tags"""
-    pass
+class ActiveSquadsDto(BaseModel):
+    squad_name: str = Field(..., alias="squadName")
+    active_inbounds: list[str] = Field(..., alias="activeInbounds")
 
 
-class GetSubscriptionRequestsResponseDto(SubscriptionRequestsResponseData):
-    """Response for get subscription requests"""
-    pass
+class ActiveNodesDto(BaseModel):
+    uuid: UUID
+    node_name: str = Field(..., alias="nodeName")
+    country_code: str = Field(..., alias="countryCode")
+    config_profile_uuid: UUID = Field(..., alias="configProfileUuid")
+    config_profile_name: str = Field(..., alias="configProfileName")
+    active_squads: list[ActiveSquadsDto] = Field(..., alias="activeSquads")
 
 
-class GetUserSubscriptionRequestHistoryResponseDto(SubscriptionRequestsResponseData):
-    """Response for get user subscription request history"""
-    pass
+class GetUserAccessibleNodesResponseDto(BaseModel):
+    user_id: int = Field(..., alias="userId")
+    active_nodes: list[ActiveNodesDto] = Field(..., alias="activeNodes")
 
 
-class DeleteUserResponseDto(BaseModel):
-    """Response for delete user"""
-    is_deleted: bool = Field(alias="isDeleted")
+class UserRecordsDto(BaseModel):
+    id: int
+    user_id: int = Field(..., alias="userId")
+    request_at: datetime = Field(..., alias="requestAt")
+    srr_response_type: str = Field(..., alias="srrResponseType")
+    request_ip: str | None = Field(None, alias="requestIp")
+    user_agent: str | None = Field(None, alias="userAgent")
+    srr_rule_name: str | None = Field(None, alias="srrRuleName")
 
 
-class EmailUserResponseDto(RootModel[list[UserResponseDto]]):
-    """Response for get users by email"""
-    def __iter__(self):
-        return iter(self.root)
-
-    def __getitem__(self, item):
-        return self.root[item]
-    
-    def __bool__(self):
-        """Return True if list is not empty"""
-        return bool(self.root)
-    
-    def __len__(self):
-        """Return length of list"""
-        return len(self.root)
+class GetUserSubscriptionRequestHistoryResponseDto(BaseModel):
+    total: float
+    records: list[UserRecordsDto]
 
 
-class TagUserResponseDto(RootModel[list[UserResponseDto]]):
-    """Response for get users by tag"""
-    def __iter__(self):
-        return iter(self.root)
-
-    def __getitem__(self, item):
-        return self.root[item]
-    
-    def __bool__(self):
-        """Return True if list is not empty"""
-        return bool(self.root)
-    
-    def __len__(self):
-        """Return length of list"""
-        return len(self.root)
+class RevokeUserRequestDto(BaseModel):
+    revoke_only_passwords: bool | None = Field(
+        None, serialization_alias="revokeOnlyPasswords"
+    )
+    short_uuid: str | None = Field(None, serialization_alias="shortUuid")
 
 
-class TelegramUserResponseDto(RootModel[list[UserResponseDto]]):
-    """Response for get users by telegram ID"""
-    def __iter__(self):
-        return iter(self.root)
+class ExtendUserRequestDto(BaseModel):
+    days: int
 
-    def __getitem__(self, item):
-        return self.root[item]
-    
-    def __bool__(self):
-        """Return True if list is not empty"""
-        return bool(self.root)
-    
-    def __len__(self):
-        """Return length of list"""
-        return len(self.root)
+
+class ResolveUserRequestBodyDto(BaseModel):
+    id: int | None = None
+    short_uuid: str | None = Field(None, serialization_alias="shortUuid")
+    username: str | None = None
+
+
+class ResolveUserResponseDto(BaseModel):
+    id: int
+    username: str
+    short_uuid: str = Field(..., alias="shortUuid")
+
+
+class UserHappCrypto(BaseModel):
+    """HAPP crypto link (generated client-side)"""
+
+    crypto_link: str = Field(alias="cryptoLink")
+
+
+def _attach_happ(cls):
+    """Attach happ helpers to a response model with subscription_url."""
+
+    @property
+    def happ(self) -> UserHappCrypto:
+        """Generate Happ Crypto Link"""
+        crypto_link = create_happ_crypto_link(self.subscription_url)
+        return UserHappCrypto(cryptoLink=crypto_link)
+
+    def happ_with_version(self, version: Literal["v3", "v4"] = "v4") -> UserHappCrypto:
+        crypto_link = create_happ_crypto_link(
+            content=self.subscription_url, method=version
+        )
+        return UserHappCrypto(cryptoLink=crypto_link)
+
+    cls.happ = happ
+    cls.happ_with_version = happ_with_version
+    return cls
+
+
+_attach_happ(UserResponseDto)
+
+
+# Backward-compat accessors for user traffic fields
+def _attach_traffic_props(cls):
+    @property
+    def used_traffic_bytes(self) -> float:
+        return self.user_traffic.used_traffic_bytes
+
+    @property
+    def lifetime_used_traffic_bytes(self) -> float:
+        return self.user_traffic.lifetime_used_traffic_bytes
+
+    @property
+    def online_at(self):
+        return self.user_traffic.online_at
+
+    @property
+    def first_connected_at(self):
+        return self.user_traffic.first_connected_at
+
+    @property
+    def last_connected_node_uuid(self):
+        return self.user_traffic.last_connected_node_uuid
+
+    cls.used_traffic_bytes = used_traffic_bytes
+    cls.lifetime_used_traffic_bytes = lifetime_used_traffic_bytes
+    cls.online_at = online_at
+    cls.first_connected_at = first_connected_at
+    cls.last_connected_node_uuid = last_connected_node_uuid
+    return cls
+
+
+_attach_traffic_props(UserResponseDto)

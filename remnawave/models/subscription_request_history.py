@@ -1,41 +1,48 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import List, Optional
-from uuid import UUID
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 
-class SubscriptionRequestHistoryRecord(BaseModel):
+class SubReqHistoryRecordsDto(BaseModel):
     id: int
-    user_uuid: UUID = Field(alias="userUuid")
-    request_ip: Optional[str] = Field(alias="requestIp")
-    user_agent: Optional[str] = Field(alias="userAgent")
-    request_at: datetime = Field(alias="requestAt")
+    user_id: int = Field(..., alias="userId")
+    srr_response_type: str = Field(..., alias="srrResponseType")
+    srr_rule_name: str | None = Field(None, alias="srrRuleName")
+    request_ip: str | None = Field(None, alias="requestIp")
+    user_agent: str | None = Field(None, alias="userAgent")
+    request_at: datetime = Field(..., alias="requestAt")
 
 
-class SubscriptionRequestHistoryData(BaseModel):
-    records: List[SubscriptionRequestHistoryRecord]
-    total: int
+class GetSubscriptionRequestHistoryResponseDto(BaseModel):
+    records: list[SubReqHistoryRecordsDto]
+    total: float
 
 
-class GetAllSubscriptionRequestHistoryResponseDto(SubscriptionRequestHistoryData):
-    pass
-
-
-class AppStatItem(BaseModel):
+class ByParsedAppDto(BaseModel):
     app: str
-    count: float
+    count: int
 
 
-class HourlyRequestStat(BaseModel):
-    date_time: datetime = Field(alias="dateTime")
-    request_count: float = Field(alias="requestCount")
+class HourlyRequestStatsDto(BaseModel):
+    date_time: datetime = Field(..., alias="dateTime")
+    request_count: int = Field(..., alias="requestCount")
 
 
-class SubscriptionRequestHistoryStatsData(BaseModel):
-    by_parsed_app: List[AppStatItem] = Field(alias="byParsedApp")
-    hourly_request_stats: List[HourlyRequestStat] = Field(alias="hourlyRequestStats")
+class GetSubscriptionRequestHistoryStatsResponseDto(BaseModel):
+    by_parsed_app: list[ByParsedAppDto] = Field(..., alias="byParsedApp")
+    hourly_request_stats: list[HourlyRequestStatsDto] = Field(
+        ..., alias="hourlyRequestStats"
+    )
 
 
-class GetSubscriptionRequestHistoryStatsResponseDto(SubscriptionRequestHistoryStatsData):
-    pass
+class RemnawaveSubscriptionRequestStreamMessageDto(BaseModel):
+    v: Literal["1"]
+    user_id: str = Field(..., alias="userId")
+    request_at: datetime = Field(..., alias="requestAt")
+    request_ip: str | None = Field(None, alias="requestIp")
+    user_agent: str | None = Field(None, alias="userAgent")
+    srr_rule_name: str | None = Field(None, alias="srrRuleName")
+    srr_response_type: str = Field(..., alias="srrResponseType")

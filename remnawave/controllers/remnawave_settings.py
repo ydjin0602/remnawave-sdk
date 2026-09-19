@@ -14,7 +14,6 @@ class RemnawaveSettingsController(BaseController):
     @get("/remnawave-settings", response_class=GetRemnawaveSettingsResponseDto)
     async def get_settings(self) -> GetRemnawaveSettingsResponseDto:
         """Get Remnawave settings"""
-        ...
 
     @patch("/remnawave-settings", response_class=UpdateRemnawaveSettingsResponseDto)
     async def update_settings(
@@ -22,4 +21,3 @@ class RemnawaveSettingsController(BaseController):
         body: Annotated[UpdateRemnawaveSettingsRequestDto, PydanticBody()],
     ) -> UpdateRemnawaveSettingsResponseDto:
         """Update Remnawave settings"""
-        ...

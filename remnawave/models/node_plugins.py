@@ -1,189 +1,151 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Any, Annotated, List, Literal, Optional, Union
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, Field
 
 
-class TorrentBlockerUserDto(BaseModel):
-    uuid: UUID
+class UserDto(BaseModel):
     username: str
 
 
-class TorrentBlockerNodeDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class NodePluginNodeDto(BaseModel):
     uuid: UUID
     name: str
-    country_code: str = Field(alias="countryCode")
+    country_code: str = Field(..., alias="countryCode")
 
 
-class TorrentBlockerActionReportDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class ActionReportDto(BaseModel):
     blocked: bool
     ip: str
-    block_duration: float = Field(alias="blockDuration")
-    will_unblock_at: datetime = Field(alias="willUnblockAt")
-    user_id: str = Field(alias="userId")
-    processed_at: datetime = Field(alias="processedAt")
+    block_duration: float = Field(..., alias="blockDuration")
+    will_unblock_at: datetime = Field(..., alias="willUnblockAt")
+    user_id: str = Field(..., alias="userId")
+    processed_at: datetime = Field(..., alias="processedAt")
 
 
-class TorrentBlockerXrayReportDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    email: Optional[str] = None
-    level: Optional[float] = None
-    protocol: Optional[str] = None
+class XrayReportDto(BaseModel):
+    email: str | None = None
+    level: float | None = None
+    protocol: str | None = None
     network: str
-    source: Optional[str] = None
+    source: str | None = None
     destination: str
-    route_target: Optional[str] = Field(default=None, alias="routeTarget")
-    original_target: Optional[str] = Field(default=None, alias="originalTarget")
-    inbound_tag: Optional[str] = Field(default=None, alias="inboundTag")
-    inbound_name: Optional[str] = Field(default=None, alias="inboundName")
-    inbound_local: Optional[str] = Field(default=None, alias="inboundLocal")
-    outbound_tag: Optional[str] = Field(default=None, alias="outboundTag")
+    route_target: str | None = Field(None, alias="routeTarget")
+    original_target: str | None = Field(None, alias="originalTarget")
+    inbound_tag: str | None = Field(None, alias="inboundTag")
+    inbound_name: str | None = Field(None, alias="inboundName")
+    inbound_local: str | None = Field(None, alias="inboundLocal")
+    outbound_tag: str | None = Field(None, alias="outboundTag")
     ts: float
 
 
-class TorrentBlockerReportPayloadDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    action_report: TorrentBlockerActionReportDto = Field(alias="actionReport")
-    xray_report: TorrentBlockerXrayReportDto = Field(alias="xrayReport")
+class ReportDto(BaseModel):
+    action_report: ActionReportDto = Field(..., alias="actionReport")
+    xray_report: XrayReportDto = Field(..., alias="xrayReport")
 
 
-class TorrentBlockerReportRecordDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    id: float
-    user_id: float = Field(alias="userId")
-    node_id: float = Field(alias="nodeId")
-    user: TorrentBlockerUserDto
-    node: TorrentBlockerNodeDto
-    report: TorrentBlockerReportPayloadDto
-    created_at: datetime = Field(alias="createdAt")
+class NodePluginRecordsDto(BaseModel):
+    id: int
+    user_id: int = Field(..., alias="userId")
+    node_id: int = Field(..., alias="nodeId")
+    user: UserDto
+    node: NodePluginNodeDto
+    report: ReportDto
+    created_at: datetime = Field(..., alias="createdAt")
 
 
-class TorrentBlockerReportsData(BaseModel):
-    records: List[TorrentBlockerReportRecordDto]
+class GetTorrentBlockerReportsResponseDto(BaseModel):
+    records: list[NodePluginRecordsDto]
     total: float
 
 
-class GetTorrentBlockerReportsResponseDto(TorrentBlockerReportsData):
-    pass
+class NodePluginStatsDto(BaseModel):
+    distinct_nodes: float = Field(..., alias="distinctNodes")
+    distinct_users: float = Field(..., alias="distinctUsers")
+    total_reports: float = Field(..., alias="totalReports")
+    reports_last24_hours: float = Field(..., alias="reportsLast24Hours")
 
 
-class TruncateTorrentBlockerReportsResponseDto(TorrentBlockerReportsData):
-    pass
-
-
-class TorrentBlockerStatsDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    distinct_nodes: float = Field(alias="distinctNodes")
-    distinct_users: float = Field(alias="distinctUsers")
-    total_reports: float = Field(alias="totalReports")
-    reports_last_24_hours: float = Field(alias="reportsLast24Hours")
-
-
-class TorrentBlockerTopUserDto(BaseModel):
-    uuid: UUID
+class NodePluginTopUsersDto(BaseModel):
+    user_id: int = Field(..., alias="userId")
     color: str
     username: str
     total: float
 
 
-class TorrentBlockerTopNodeDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class NodePluginTopNodesDto(BaseModel):
     uuid: UUID
-    country_code: str = Field(alias="countryCode")
+    country_code: str = Field(..., alias="countryCode")
     color: str
     name: str
     total: float
 
 
 class GetTorrentBlockerReportsStatsResponseDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    stats: TorrentBlockerStatsDto
-    top_users: List[TorrentBlockerTopUserDto] = Field(alias="topUsers")
-    top_nodes: List[TorrentBlockerTopNodeDto] = Field(alias="topNodes")
+    stats: NodePluginStatsDto
+    top_users: list[NodePluginTopUsersDto] = Field(..., alias="topUsers")
+    top_nodes: list[NodePluginTopNodesDto] = Field(..., alias="topNodes")
 
 
-class NodePluginDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class NodePluginsDto(BaseModel):
     uuid: UUID
-    view_position: int = Field(alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     name: str
-    plugin_config: Any | None = Field(alias="pluginConfig")
+    plugin_config: Any | None = Field(None, alias="pluginConfig")
 
 
 class GetNodePluginsResponseDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
     total: float
-    node_plugins: List[NodePluginDto] = Field(alias="nodePlugins")
+    node_plugins: list[NodePluginsDto] = Field(..., alias="nodePlugins")
 
 
-class GetNodePluginResponseDto(NodePluginDto):
-    pass
+class GetNodePluginResponseDto(BaseModel):
+    uuid: UUID
+    view_position: int = Field(..., alias="viewPosition")
+    name: str
+    plugin_config: Any = Field(..., alias="pluginConfig")
 
 
 class UpdateNodePluginRequestDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
     uuid: UUID
-    name: Optional[
-        Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]
-    ] = None
-    plugin_config: Optional[Any] = Field(default=None, alias="pluginConfig")
+    name: str | None = None
+    plugin_config: Any | None = Field(None, serialization_alias="pluginConfig")
 
 
-class UpdateNodePluginResponseDto(NodePluginDto):
-    pass
-
-
-class DeleteNodePluginResponseDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    is_deleted: bool = Field(alias="isDeleted")
+class UpdateNodePluginResponseDto(GetNodePluginResponseDto):
+    """Alias of GetNodePluginResponseDto (envelope unwrapped)."""
 
 
 class CreateNodePluginRequestDto(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]
+    name: str
 
 
-class CreateNodePluginResponseDto(NodePluginDto):
-    pass
+class CreateNodePluginResponseDto(NodePluginsDto):
+    """Alias of NodePluginsDto (envelope unwrapped)."""
 
 
 class ReorderNodePluginItem(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    view_position: int = Field(alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     uuid: UUID
 
 
 class ReorderNodePluginsRequestDto(BaseModel):
-    items: List[ReorderNodePluginItem]
+    items: list[ReorderNodePluginItem]
 
 
 class ReorderNodePluginsResponseDto(GetNodePluginsResponseDto):
-    pass
+    """Alias of GetNodePluginsResponseDto (envelope unwrapped)."""
 
 
 class CloneNodePluginRequestDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    clone_from_uuid: UUID = Field(alias="cloneFromUuid")
+    clone_from_uuid: UUID = Field(..., serialization_alias="cloneFromUuid")
 
 
-class CloneNodePluginResponseDto(NodePluginDto):
-    pass
+class CloneNodePluginResponseDto(GetNodePluginResponseDto):
+    """Alias of GetNodePluginResponseDto (envelope unwrapped)."""
 
 
 class BlockIpItemDto(BaseModel):
@@ -193,43 +155,29 @@ class BlockIpItemDto(BaseModel):
 
 class BlockIpsCommandDto(BaseModel):
     command: Literal["blockIps"]
-    ips: List[BlockIpItemDto]
+    ips: list[BlockIpItemDto]
 
 
 class UnblockIpsCommandDto(BaseModel):
     command: Literal["unblockIps"]
-    ips: List[str]
+    ips: list[str]
 
 
 class RecreateTablesCommandDto(BaseModel):
     command: Literal["recreateTables"]
 
 
-PluginCommandDto = Union[BlockIpsCommandDto, UnblockIpsCommandDto, RecreateTablesCommandDto]
-
-
-class TargetAllNodesDto(BaseModel):
+class NodePluginTargetAllNodesDto(BaseModel):
     target: Literal["allNodes"]
 
 
-class TargetSpecificNodesDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class NodePluginTargetSpecificNodesDto(BaseModel):
     target: Literal["specificNodes"]
-    node_uuids: List[UUID] = Field(alias="nodeUuids")
-
-
-PluginTargetNodesDto = Union[TargetAllNodesDto, TargetSpecificNodesDto]
+    node_uuids: list[UUID] = Field(..., serialization_alias="nodeUuids")
 
 
 class PluginExecutorRequestDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    command: PluginCommandDto
-    target_nodes: PluginTargetNodesDto = Field(alias="targetNodes")
-
-
-class PluginExecutorResponseDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    event_sent: bool = Field(alias="eventSent")
+    command: BlockIpsCommandDto | UnblockIpsCommandDto | RecreateTablesCommandDto
+    target_nodes: NodePluginTargetAllNodesDto | NodePluginTargetSpecificNodesDto = (
+        Field(..., serialization_alias="targetNodes")
+    )

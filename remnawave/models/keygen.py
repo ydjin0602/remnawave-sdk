@@ -1,13 +1,7 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from pydantic import BaseModel, Field
 
 
-class PubKeyData(BaseModel):
-    pub_key: str = Field(alias="pubKey")
-
-
-class GetPubKeyResponseDto(BaseModel):
-    pub_key: str = Field(alias="pubKey")
-
-
-# Legacy alias for backward compatibility
-PubKeyResponseDto = PubKeyData
+class GetNodeSecretKeyResponseDto(BaseModel):
+    secret_key: str = Field(..., alias="secretKey")

@@ -38,9 +38,7 @@ TServiceEvents = Literal[
     "service.api_token_deleted",
 ]
 
-TErrorsEvents = Literal[
-    "errors.bandwidth_usage_threshold_reached_max_notifications",
-]
+TErrorsEvents = Literal["errors.bandwidth_usage_threshold_reached_max_notifications",]
 
 TCRMEvents = Literal[
     "crm.infra_billing_node_payment_in_7_days",
@@ -57,9 +55,7 @@ TUserHwidDevicesEvents = Literal[
     "user_hwid_devices.deleted",
 ]
 
-TTorrentBlockerEvents = Literal[
-    "torrent_blocker.report",
-]
+TTorrentBlockerEvents = Literal["torrent_blocker.report",]
 
 TResetPeriods = Literal["NO_RESET", "DAY", "WEEK", "MONTH", "MONTH_ROLLING"]
 TUsersStatus = Literal["DISABLED", "LIMITED", "EXPIRED", "ACTIVE"]

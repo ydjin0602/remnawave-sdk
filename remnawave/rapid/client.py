@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from inspect import BoundArguments, Signature
-from typing import Any, Dict, Mapping, Self, Tuple, Type
+from typing import Any, Self
 
 import httpx
 import orjson
@@ -17,7 +18,7 @@ from rapid_api_client import (
     RapidApi,
 )
 from rapid_api_client.annotations import Header, JsonBody, Path, Query
-from rapid_api_client.client import pydantic_xml, RapidParameter, RapidParameters
+from rapid_api_client.client import RapidParameter, RapidParameters, pydantic_xml
 from rapid_api_client.typing import BM, T
 from rapid_api_client.utils import filter_none_values, find_annotation
 
@@ -26,15 +27,40 @@ from remnawave.rapid import AttributeBody
 from remnawave.utils.serializer import orjson_default
 
 
-class BaseController(RapidApi):
+def _flatten_query_params(params: dict) -> dict[str, str]:
+    """Encode nested query params as compact JSON strings.
 
+    Remnawave table endpoints (GET /users, /hwid/devices, ...) accept
+    ``filters=[{"id":"username","value":"x"}]`` and
+    ``sorting=[{"id":"createdAt","desc":true}]`` as JSON-encoded
+    query parameter values (fastify simple parser + JSON.parse).
+    """
+
+    def _scalar(v):
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        if isinstance(v, (list, tuple, dict)):
+            import json
+
+            return json.dumps(v, separators=(",", ":"), ensure_ascii=False)
+        return v
+
+    flat: dict[str, str] = {}
+    for key, value in (params or {}).items():
+        if value is None:
+            continue
+        flat[key] = _scalar(value)
+    return flat
+
+
+class BaseController(RapidApi):
     def _build_request(
         self,
         sig: Signature,
         rapid_parameters: CustomRapidParameters,
         method: str,
         path: str,
-        args: Tuple[Any],
+        args: tuple[Any],
         kwargs: Mapping[str, Any],
         timeout: float | None,
     ) -> Request:
@@ -43,9 +69,9 @@ class BaseController(RapidApi):
 
         path = rapid_parameters.get_resolved_path(path, ba)
 
-        build_kwargs: Dict[str, Any] = {
+        build_kwargs: dict[str, Any] = {
             "headers": rapid_parameters.get_headers(ba),
-            "params": rapid_parameters.get_query(ba),
+            "params": _flatten_query_params(rapid_parameters.get_query(ba)),
         }
         post_kw, post_data = rapid_parameters.get_body(ba)
         if post_kw is not None:
@@ -59,8 +85,27 @@ class BaseController(RapidApi):
     def _handle_response(
         self,
         response: Response,
-        response_class: Type[Response | str | bytes | BM] | TypeAdapter[T] = Response,
+        response_class: type[Response | str | bytes | BM] | TypeAdapter[T] = Response,
     ) -> Response | str | bytes | BM | T:
+        if response_class is None:
+            # Endpoints without a body (204/202): validate status and return None
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                handle_api_error(e.response)
+            except httpx.RequestError as e:
+                now_time = datetime.now(UTC)
+                raise ApiError(
+                    0,
+                    ApiErrorResponse(
+                        timestamp=now_time,
+                        path="/api/users",
+                        message=f"Request error: {e!s}",
+                        code="NETWORK_ERROR",
+                    ),
+                )
+            return None
+
         if response_class is Response:
             return response
 
@@ -69,13 +114,13 @@ class BaseController(RapidApi):
         except httpx.HTTPStatusError as e:
             handle_api_error(e.response)
         except httpx.RequestError as e:
-            now_time = datetime.now()
+            now_time = datetime.now(UTC)
             raise ApiError(
                 0,
                 ApiErrorResponse(
                     timestamp=now_time,
                     path="/api/users",
-                    message=f"Request error: {str(e)}",
+                    message=f"Request error: {e!s}",
                     code="NETWORK_ERROR",
                 ),
             )
@@ -92,7 +137,7 @@ class BaseController(RapidApi):
             return response_class.from_xml(response.content)
         if issubclass(response_class, BaseModel):
             data = response.json()
-            
+
             # Check if this is a RootModel (list response)
             if issubclass(response_class, RootModel):
                 # This is a RootModel - needs the list data, not the wrapper
@@ -104,24 +149,29 @@ class BaseController(RapidApi):
             else:
                 # This is a regular BaseModel
                 # Auto-unwrap single response field for convenience
-                if (isinstance(data, dict) and 
-                    len(data) == 1 and 
-                    "response" in data and
-                    hasattr(response_class, 'model_fields') and 
-                    len(response_class.model_fields) == 1 and
-                    'response' in response_class.model_fields):
+                if (
+                    isinstance(data, dict)
+                    and len(data) == 1
+                    and "response" in data
+                    and hasattr(response_class, "model_fields")
+                    and len(response_class.model_fields) == 1
+                    and "response" in response_class.model_fields
+                ):
                     # This is a wrapper model with single "response" field
                     # Return the inner data directly for convenience
-                    inner_field = response_class.model_fields['response']
+                    inner_field = response_class.model_fields["response"]
                     inner_type = inner_field.annotation
-                    
+
                     # If it's a simple type annotation, use it directly
-                    if hasattr(inner_type, 'model_validate'):
+                    if hasattr(inner_type, "model_validate"):
                         return inner_type.model_validate(data["response"])
                     else:
                         # Fallback to original behavior
                         return response_class.model_validate(data)
-                elif hasattr(response_class, 'model_fields') and 'response' in response_class.model_fields:
+                elif (
+                    hasattr(response_class, "model_fields")
+                    and "response" in response_class.model_fields
+                ):
                     # Model expects full data with response wrapper
                     return response_class.model_validate(data)
                 elif isinstance(data, dict) and "response" in data:
@@ -151,25 +201,28 @@ class CustomRapidParameters(RapidParameters):
             first_body_param = out.body_parameters[0]
             if isinstance(first_body_param.annot, FileBody):
                 assert all(
-                    map(lambda p: isinstance(p.annot, FileBody), out.body_parameters)
+                    isinstance(p.annot, FileBody) for p in out.body_parameters
                 ), "All body parameters must be of type FileBody"
             elif isinstance(first_body_param.annot, FormBody):
                 assert all(
-                    map(lambda p: isinstance(p.annot, FormBody), out.body_parameters)
+                    isinstance(p.annot, FormBody) for p in out.body_parameters
                 ), "All body parameters must be of type FormBody"
             elif isinstance(first_body_param.annot, JsonBody):
                 assert len(out.body_parameters) == 1, "Only one JsonBody allowed"
-            elif isinstance(first_body_param.annot, Body) and not isinstance(
-                first_body_param.annot,
-                AttributeBody,  # don't check the AttributeBody because there can be more than one
+            elif (
+                isinstance(first_body_param.annot, Body)
+                and not isinstance(
+                    first_body_param.annot,
+                    AttributeBody,  # don't check the AttributeBody because there can be more than one
+                )
             ):
-                assert (
-                    len(out.body_parameters) == 1
-                ), "Only one Body (JsonBody, FormBody, PydanticBody, FileBody, PydanticXmlBody) allowed"
+                assert len(out.body_parameters) == 1, (
+                    "Only one Body (JsonBody, FormBody, PydanticBody, FileBody, PydanticXmlBody) allowed"
+                )
 
         return out
 
-    def get_body(self, ba: BoundArguments) -> Tuple[str | None, Any]:
+    def get_body(self, ba: BoundArguments) -> tuple[str | None, Any]:
         """
         Prepares the body of an HTTP request based on annotated parameters.
 
@@ -211,9 +264,9 @@ class CustomRapidParameters(RapidParameters):
                 if len(values) > 0:
                     return "data", values
             elif isinstance(first_body_param.annot, PydanticXmlBody):
-                assert (
-                    pydantic_xml is not None
-                ), "pydantic-xml must be installed to use PydanticXmlBody"
+                assert pydantic_xml is not None, (
+                    "pydantic-xml must be installed to use PydanticXmlBody"
+                )
                 if (value := first_body_param.get_value(ba)) is not None:
                     assert isinstance(value, pydantic_xml.BaseXmlModel)
                     return "content", value.to_xml()

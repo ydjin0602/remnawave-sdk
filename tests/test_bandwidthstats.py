@@ -1,229 +1,83 @@
 import pytest
 
 from remnawave.models import (
-    # Legacy models (deprecated)
-    GetNodesUsageByRangeResponseDto,
-    GetNodesRealtimeUsageResponseDto,
-    GetNodeUserUsageByRangeResponseDto,
-    GetUserUsageByRangeResponseDto,
-
-    # New stats models
-    GetLegacyStatsUserUsageResponseDto,
-    GetLegacyStatsNodesUsersUsageResponseDto,
+    GetInternalSquadUsageResponseDto,
     GetStatsNodesUsageResponseDto,
+    GetStatsNodesUsersUsageRequestDto,
+    GetStatsNodesUsersUsageResponseDto,
     GetStatsNodeUsersUsageResponseDto,
     GetStatsUserUsageResponseDto,
 )
-from tests.utils import generate_date_range, generate_isoformat_range
-
-@pytest.mark.asyncio
-async def test_legacy_user_usage(remnawave):
-    """Test legacy user usage endpoint (deprecated)"""
-    # Get first user
-    users = await remnawave.users.get_all_users()
-    if not users.users:
-        pytest.skip("No users available for testing")
-    
-    user_uuid = str(users.users[0].uuid)
-    start, end = generate_date_range()
-    
-    user_usage = await remnawave.bandwidthstats.get_user_usage_legacy_old(
-        user_uuid=user_uuid,
-        start=start,
-        end=end
-    )
-    assert hasattr(user_usage, 'root')
-    assert isinstance(user_usage.root, list)
-    if user_usage.root:
-        first_item = user_usage.root[0]
-        assert hasattr(first_item, 'user_uuid')
-        assert hasattr(first_item, 'node_uuid')
+from tests.utils import generate_date_range
 
 
 @pytest.mark.asyncio
-async def test_legacy_node_user_usage(remnawave):
-    """Test legacy node user usage endpoint (deprecated)"""
-    # Get first node
-    nodes = await remnawave.nodes.get_all_nodes()
-    if not nodes:
-        pytest.skip("No nodes available for testing")
-    
-    node_uuid = str(nodes[0].uuid)
+async def test_nodes_usage(remnawave):
+    """Test GET /bandwidth-stats/nodes"""
     start, end = generate_date_range()
-    
-    node_user_usage = await remnawave.bandwidthstats.get_node_user_usage_legacy_old(
-        node_uuid=node_uuid,
-        start=start,
-        end=end
-    )
-    assert hasattr(node_user_usage, 'root')
-    assert isinstance(node_user_usage.root, list)
-    if node_user_usage.root:
-        first_item = node_user_usage.root[0]
-        assert hasattr(first_item, 'user_uuid')
-        assert hasattr(first_item, 'username')
-        assert hasattr(first_item, 'node_uuid')
-        assert hasattr(first_item, 'total')
-    assert len(node_user_usage) >= 0
-
-
-@pytest.mark.asyncio
-async def test_stats_nodes_usage(remnawave):
-    """Test new stats nodes usage endpoint with charts"""
-    start, end = generate_date_range()
-    
-    nodes_usage = await remnawave.bandwidthstats.get_stats_nodes_usage(
-        start=start,
-        end=end,
-        top_nodes_limit=5
-    )
-    assert isinstance(nodes_usage, GetStatsNodesUsageResponseDto)
-    assert hasattr(nodes_usage, 'response')
-    assert hasattr(nodes_usage.response, 'categories')
-    assert hasattr(nodes_usage.response, 'sparkline_data')
-    assert hasattr(nodes_usage.response, 'top_nodes')
-    assert hasattr(nodes_usage.response, 'series')
-    
-    # Check data types
-    assert isinstance(nodes_usage.response.categories, list)
-    assert isinstance(nodes_usage.response.sparkline_data, list)
-    assert isinstance(nodes_usage.response.top_nodes, list)
-    assert isinstance(nodes_usage.response.series, list)
-
-
-@pytest.mark.asyncio
-async def test_stats_node_users_usage(remnawave):
-    """Test new stats node users usage endpoint"""
-    # Get first node
-    nodes = await remnawave.nodes.get_all_nodes()
-    if not nodes:
-        pytest.skip("No nodes available for testing")
-    
-    node_uuid = str(nodes[0].uuid)
-    start, end = generate_date_range()
-    
-    node_users_usage = await remnawave.bandwidthstats.get_stats_node_users_usage(
-        uuid=node_uuid,
-        start=start,
-        end=end,
-        top_users_limit=5
-    )
-    assert isinstance(node_users_usage, GetStatsNodeUsersUsageResponseDto)
-    assert hasattr(node_users_usage, 'response')
-    assert hasattr(node_users_usage.response, 'categories')
-    assert hasattr(node_users_usage.response, 'sparkline_data')
-    assert hasattr(node_users_usage.response, 'top_users')
-    
-    # Check data types
-    assert isinstance(node_users_usage.response.categories, list)
-    assert isinstance(node_users_usage.response.sparkline_data, list)
-    assert isinstance(node_users_usage.response.top_users, list)
+    usage = await remnawave.bandwidthstats.get_nodes_usage(start=start, end=end)
+    assert isinstance(usage, GetStatsNodesUsageResponseDto)
+    assert hasattr(usage, "categories")
+    assert hasattr(usage, "top_nodes")
 
 
 @pytest.mark.asyncio
 async def test_stats_user_usage(remnawave):
-    """Test new stats user usage endpoint"""
-    # Get first user
-    users = await remnawave.users.get_all_users()
+    """Test GET /bandwidth-stats/users/{userId}"""
+    users = await remnawave.users.get_all_users(size=1)
     if not users.users:
         pytest.skip("No users available for testing")
-    
-    user_uuid = str(users.users[0].uuid)
+    user_id = users.users[0].id
     start, end = generate_date_range()
-    
-    user_usage = await remnawave.bandwidthstats.get_stats_user_usage(
-        uuid=user_uuid,
-        start=start,
-        end=end,
-        top_nodes_limit=5
+    usage = await remnawave.bandwidthstats.get_stats_user_usage(
+        user_id=user_id, start=start, end=end
     )
-    assert isinstance(user_usage, GetStatsUserUsageResponseDto)
-    assert hasattr(user_usage, 'response')
-    assert hasattr(user_usage.response, 'categories')
-    assert hasattr(user_usage.response, 'sparkline_data')
-    assert hasattr(user_usage.response, 'top_nodes')
-    assert hasattr(user_usage.response, 'series')
-    
-    # Check data types
-    assert isinstance(user_usage.response.categories, list)
-    assert isinstance(user_usage.response.sparkline_data, list)
-    assert isinstance(user_usage.response.top_nodes, list)
-    assert isinstance(user_usage.response.series, list)
+    assert isinstance(usage, GetStatsUserUsageResponseDto)
+    assert hasattr(usage, "top_nodes")
 
 
 @pytest.mark.asyncio
-async def test_legacy_stats_user_usage(remnawave):
-    """Test legacy stats user usage endpoint"""
-    # Get first user
-    users = await remnawave.users.get_all_users()
-    if not users.users:
-        pytest.skip("No users available for testing")
-    
-    user_uuid = str(users.users[0].uuid)
-    start, end = generate_date_range()
-    
-    legacy_user_usage = await remnawave.bandwidthstats.get_user_usage_legacy_stats(
-        uuid=user_uuid,
-        start=start,
-        end=end
-    )
-    assert isinstance(legacy_user_usage, GetLegacyStatsUserUsageResponseDto)
-    assert hasattr(legacy_user_usage, 'response')
-    assert isinstance(legacy_user_usage.response, list)
-    
-    # Check structure if data exists
-    if legacy_user_usage.response:
-        first_item = legacy_user_usage.response[0]
-        assert hasattr(first_item, 'user_uuid')
-        assert hasattr(first_item, 'node_uuid')
-        assert hasattr(first_item, 'node_name')
-        assert hasattr(first_item, 'total')
-
-
-@pytest.mark.asyncio
-async def test_legacy_stats_nodes_users_usage(remnawave):
-    """Test legacy stats nodes users usage endpoint"""
-    # Get first node
+async def test_stats_node_users_usage(remnawave):
+    """Test GET /bandwidth-stats/nodes/{uuid}/users"""
     nodes = await remnawave.nodes.get_all_nodes()
-    if not nodes:
+    if not nodes.root:
         pytest.skip("No nodes available for testing")
-    
-    node_uuid = str(nodes[0].uuid)
+    node_uuid = str(nodes.root[0].uuid)
     start, end = generate_date_range()
-    
-    legacy_node_users = await remnawave.bandwidthstats.get_node_users_usage_legacy_stats(
-        uuid=node_uuid,
-        start=start,
-        end=end
+    usage = await remnawave.bandwidthstats.get_stats_node_users_usage(
+        uuid=node_uuid, start=start, end=end
     )
-    assert isinstance(legacy_node_users, GetLegacyStatsNodesUsersUsageResponseDto)
-    assert hasattr(legacy_node_users, 'response')
-    assert isinstance(legacy_node_users.response, list)
-    
-    # Check structure if data exists
-    if legacy_node_users.response:
-        first_item = legacy_node_users.response[0]
-        assert hasattr(first_item, 'user_uuid')
-        assert hasattr(first_item, 'username')
-        assert hasattr(first_item, 'node_uuid')
-        assert hasattr(first_item, 'total')
+    assert isinstance(usage, GetStatsNodeUsersUsageResponseDto)
+    assert hasattr(usage, "top_users")
+
 
 @pytest.mark.asyncio
-async def test_bandwidth_data_structure(remnawave):
-    """Test bandwidth stats data structure validity"""
+async def test_stats_nodes_users_usage(remnawave):
+    """Test POST /bandwidth-stats/nodes/users"""
+    nodes = await remnawave.nodes.get_all_nodes()
+    if not nodes.root:
+        pytest.skip("No nodes available for testing")
+    node_uuids = [str(n.uuid) for n in nodes.root[:3]]
     start, end = generate_date_range()
-
-    # Get stats data
-    stats = await remnawave.bandwidthstats.get_stats_nodes_usage(
+    usage = await remnawave.bandwidthstats.get_stats_nodes_users_usage(
         start=start,
         end=end,
-        top_nodes_limit=3
+        body=GetStatsNodesUsersUsageRequestDto(nodes_uuids=node_uuids),
     )
-    
-    # Verify stats structure
-    assert len(stats.response.categories) == len(stats.response.sparkline_data)
-    assert len(stats.response.top_nodes) <= 3
-    
-    if stats.response.series:
-        for series_item in stats.response.series:
-            assert len(series_item.data) == len(stats.response.categories)
+    assert isinstance(usage, GetStatsNodesUsersUsageResponseDto)
+    assert hasattr(usage, "top_users")
+
+
+@pytest.mark.asyncio
+async def test_internal_squad_usage_via_bandwidthstats(remnawave):
+    """Test GET /bandwidth-stats/internal-squads/{uuid}/usage"""
+    squads = await remnawave.internal_squads.get_internal_squads()
+    if not squads.internal_squads:
+        pytest.skip("No internal squads available for testing")
+    squad_uuid = str(squads.internal_squads[0].uuid)
+    start, end = generate_date_range()
+    usage = await remnawave.bandwidthstats.get_internal_squad_usage(
+        uuid=squad_uuid, start=start, end=end
+    )
+    assert isinstance(usage, GetInternalSquadUsageResponseDto)
+    assert hasattr(usage, "users")

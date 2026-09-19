@@ -1,56 +1,41 @@
-from typing import Annotated, Any, List
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
 
-from pydantic import BaseModel, Field, StringConstraints, RootModel
+from typing import Any
+
+from pydantic import BaseModel
 
 
-class SnippetItem(BaseModel):
-    """Individual snippet item"""
+class SnippetsDto(BaseModel):
     name: str
-    snippet: Any  # Can be any JSON object or array
+    snippet: Any
 
 
-class SnippetsData(BaseModel):
-    """Snippets response data"""
-    total: int
-    snippets: List[SnippetItem]
+class GetSnippetsResponseDto(BaseModel):
+    total: float
+    snippets: list[SnippetsDto]
 
 
-# Изменяем структуру - API возвращает данные напрямую
-class GetSnippetsResponseDto(SnippetsData):
-    """Get all snippets response - extends SnippetsData directly"""
-    pass
-
-
-class CreateSnippetResponseDto(SnippetsData):
-    """Create snippet response - extends SnippetsData directly"""
-    pass
-
-
-class UpdateSnippetResponseDto(SnippetsData):
-    """Update snippet response - extends SnippetsData directly"""
-    pass
-
-
-class DeleteSnippetResponseDto(SnippetsData):
-    """Delete snippet response - extends SnippetsData directly"""
-    pass
-
-
-class CreateSnippetRequestDto(BaseModel):
-    """Create snippet request"""
-    name: Annotated[str, StringConstraints(min_length=2, max_length=255, pattern=r"^[A-Za-z0-9_\s-]+$")]
-    snippet: List[dict]  # Array of objects
-
-
-class UpdateSnippetRequestDto(BaseModel):
-    """Update snippet request"""
-    name: Annotated[str, StringConstraints(min_length=2, max_length=255, pattern=r"^[A-Za-z0-9_\s-]+$")]
-    snippet: List[dict]  # Array of objects
+class SyncSnippetRequestDto(BaseModel):
+    name: str
 
 
 class DeleteSnippetRequestDto(BaseModel):
-    """Delete snippet request"""
-    name: Annotated[str, StringConstraints(min_length=2, max_length=255, pattern=r"^[A-Za-z0-9_\s-]+$")]
+    name: str
 
-class DeleteSnippetResponseDto(SnippetsData):
-    """Delete snippet response"""
+
+class CreateSnippetRequestDto(BaseModel):
+    name: str
+    snippet: list[dict[str, Any]]
+
+
+class CreateSnippetResponseDto(GetSnippetsResponseDto):
+    """Alias of GetSnippetsResponseDto (envelope unwrapped)."""
+
+
+class UpdateSnippetRequestDto(BaseModel):
+    name: str
+    snippet: list[dict[str, Any]]
+
+
+class UpdateSnippetResponseDto(GetSnippetsResponseDto):
+    """Alias of GetSnippetsResponseDto (envelope unwrapped)."""

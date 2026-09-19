@@ -1,217 +1,277 @@
-import datetime
-from typing import Dict, List, Optional
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
+from datetime import datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from remnawave.enums import ResponseType
-from remnawave.models.subscriptions_settings import ResponseRule, ResponseRules
+from remnawave.enums import (
+    EncryptionMethod,
+    ResponseRuleConditionOperator,
+    ResponseRuleOperator,
+    ResponseType,
+)
 
 
-class NodeStatistic(BaseModel):
-    node_name: str = Field(alias="nodeName")
-    date: datetime.date
-    total_bytes: str = Field(alias="totalBytes")
+class BuildDto(BaseModel):
+    time: str
+    number: str
 
 
-class NodesStatisticResponseDto(BaseModel):
-    last_seven_days: List[NodeStatistic] = Field(alias="lastSevenDays")
+class BackendDto(BaseModel):
+    commit_sha: str = Field(..., alias="commitSha")
+    branch: str
+    commit_url: str = Field(..., alias="commitUrl")
 
 
-class BandwidthStatistic(BaseModel):
-    current: str
-    previous: str
-    difference: str
+class FrontendDto(BaseModel):
+    commit_sha: str = Field(..., alias="commitSha")
+    commit_url: str = Field(..., alias="commitUrl")
 
 
-class BandwidthStatisticResponseDto(BaseModel):
-    last_two_days: BandwidthStatistic = Field(alias="bandwidthLastTwoDays")
-    last_seven_days: BandwidthStatistic = Field(alias="bandwidthLastSevenDays")
-    last_30_days: BandwidthStatistic = Field(alias="bandwidthLast30Days")
-    calendar_month: BandwidthStatistic = Field(alias="bandwidthCalendarMonth")
-    current_year: BandwidthStatistic = Field(alias="bandwidthCurrentYear")
+class GitDto(BaseModel):
+    backend: BackendDto
+    frontend: FrontendDto
+
+
+class GetMetadataResponseDto(BaseModel):
+    version: str
+    build: BuildDto
+    git: GitDto
+
+
+class NotificationsDto(BaseModel):
+    webhook: bool
+    bandwidth_usage: list[float] | None = Field(None, alias="bandwidthUsage")
+    not_connected_after: list[float] | None = Field(None, alias="notConnectedAfter")
+    expiration_notifications: list[float] | None = Field(
+        None, alias="expirationNotifications"
+    )
+
+
+class ServiceDto(BaseModel):
+    clean_usage_history: bool = Field(..., alias="cleanUsageHistory")
+    disable_user_usage_records: bool = Field(..., alias="disableUserUsageRecords")
+    disable_srh_records: bool = Field(..., alias="disableSrhRecords")
+    export_to_redis_stream: bool = Field(..., alias="exportToRedisStream")
+
+
+class MiscDto(BaseModel):
+    short_uuid_length: float = Field(..., alias="shortUuidLength")
+    sub_public_domain: str = Field(..., alias="subPublicDomain")
+    user_usage_ignore_below_bytes: float = Field(..., alias="userUsageIgnoreBelowBytes")
+
+
+class GetConfigurationResponseDto(BaseModel):
+    notifications: NotificationsDto
+    service: ServiceDto
+    misc: MiscDto
 
 
 class CPUStatistic(BaseModel):
     cores: float
-    physical_cores: Optional[float] = Field(None, alias="physicalCores")
 
 
 class MemoryStatistic(BaseModel):
     total: float
     free: float
     used: float
-    active: Optional[float] = None
-    available: Optional[float] = None
-
-
-class StatusCounts(BaseModel):
-    """Dynamic status counts - использует additionalProperties"""
-    model_config = {"extra": "allow"}
-    
-    def __getitem__(self, key: str) -> int:
-        """Allow dict-like access"""
-        return getattr(self, key, 0)
-    
-    def get(self, key: str, default: int = 0) -> int:
-        """Dict-like get method"""
-        return getattr(self, key, default)
 
 
 class UsersStatistic(BaseModel):
-    status_counts: StatusCounts = Field(alias="statusCounts")
-    total_users: float = Field(alias="totalUsers")
+    status_counts: dict[str, Any] = Field(..., alias="statusCounts")
+    total_users: float = Field(..., alias="totalUsers")
 
 
 class OnlineStatistic(BaseModel):
-    last_day: float = Field(alias="lastDay")
-    last_week: float = Field(alias="lastWeek")
-    never_online: float = Field(alias="neverOnline")
-    online_now: float = Field(alias="onlineNow")
+    last_day: float = Field(..., alias="lastDay")
+    last_week: float = Field(..., alias="lastWeek")
+    never_online: float = Field(..., alias="neverOnline")
+    online_now: float = Field(..., alias="onlineNow")
 
 
-class NodesStatistic(BaseModel):
-    total_online: float = Field(alias="totalOnline")
-    total_bytes_lifetime: str = Field(alias="totalBytesLifetime")
+class NodesStatisticDto(BaseModel):
+    total_online: float = Field(..., alias="totalOnline")
+    total_bytes_lifetime: str = Field(..., alias="totalBytesLifetime")
 
 
-class StatisticResponseDto(BaseModel):
-    """System statistics data"""
+class GetStatsResponseDto(BaseModel):
     cpu: CPUStatistic
     memory: MemoryStatistic
     uptime: float
     timestamp: float
     users: UsersStatistic
-    online_stats: OnlineStatistic = Field(alias="onlineStats")
-    nodes: NodesStatistic
+    online_stats: OnlineStatistic = Field(..., alias="onlineStats")
+    nodes: NodesStatisticDto
 
 
-class PM2Stat(BaseModel):
-    name: str
-    memory: str
-    cpu: str
+class BandwidthLastTwoDaysDto(BaseModel):
+    current: str
+    previous: str
+    difference: str
 
 
-class RemnawaveHealthData(BaseModel):
-    pm2_stats: List[PM2Stat] = Field(alias="pm2Stats")
+class BandwidthStatisticResponseDto(BaseModel):
+    bandwidth_last_two_days: BandwidthLastTwoDaysDto = Field(
+        ..., alias="bandwidthLastTwoDays"
+    )
+    bandwidth_last_seven_days: BandwidthLastTwoDaysDto = Field(
+        ..., alias="bandwidthLastSevenDays"
+    )
+    bandwidth_last30_days: BandwidthLastTwoDaysDto = Field(
+        ..., alias="bandwidthLast30Days"
+    )
+    bandwidth_calendar_month: BandwidthLastTwoDaysDto = Field(
+        ..., alias="bandwidthCalendarMonth"
+    )
+    bandwidth_current_year: BandwidthLastTwoDaysDto = Field(
+        ..., alias="bandwidthCurrentYear"
+    )
 
 
-class GetStatsResponseDto(StatisticResponseDto):
-    """Get system statistics response"""
-    pass
-
-
-class GetBandwidthStatsResponseDto(BaseModel):
-    last_two_days: BandwidthStatistic = Field(alias="bandwidthLastTwoDays")
-    last_seven_days: BandwidthStatistic = Field(alias="bandwidthLastSevenDays")
-    last_30_days: BandwidthStatistic = Field(alias="bandwidthLast30Days")
-    calendar_month: BandwidthStatistic = Field(alias="bandwidthCalendarMonth")
-    current_year: BandwidthStatistic = Field(alias="bandwidthCurrentYear")
+class LastSevenDaysDto(BaseModel):
+    node_name: str = Field(..., alias="nodeName")
+    date: str
+    total_bytes: str = Field(..., alias="totalBytes")
 
 
 class GetNodesStatisticsResponseDto(BaseModel):
-    last_seven_days: List[NodeStatistic] = Field(alias="lastSevenDays")
+    last_seven_days: list[LastSevenDaysDto] = Field(..., alias="lastSevenDays")
 
 
-class RuntimeMetric(BaseModel):
-    """Runtime metric from health endpoint"""
-    model_config = {"extra": "allow"}
-
-    rss: Optional[float] = None
-    heap_total: Optional[float] = Field(None, alias="heapTotal")
-    heap_used: Optional[float] = Field(None, alias="heapUsed")
-    external: Optional[float] = None
-    instance_type: Optional[str] = Field(None, alias="instanceType")
+class RuntimeMetricsDto(BaseModel):
+    rss: float
+    heap_used: float = Field(..., alias="heapUsed")
+    heap_total: float = Field(..., alias="heapTotal")
+    external: float
+    array_buffers: float = Field(..., alias="arrayBuffers")
+    event_loop_delay_ms: float = Field(..., alias="eventLoopDelayMs")
+    event_loop_p99_ms: float = Field(..., alias="eventLoopP99Ms")
+    active_handles: float = Field(..., alias="activeHandles")
+    uptime: float
+    pid: int
+    timestamp: float
+    instance_id: str = Field(..., alias="instanceId")
+    instance_type: str = Field(..., alias="instanceType")
 
 
 class GetRemnawaveHealthResponseDto(BaseModel):
-    pm2_stats: Optional[List[PM2Stat]] = Field(None, alias="pm2Stats")
-    runtime_metrics: Optional[List[RuntimeMetric]] = Field(None, alias="runtimeMetrics")
+    runtime_metrics: list[RuntimeMetricsDto] = Field(..., alias="runtimeMetrics")
 
 
-class TrafficStatDto(BaseModel):
+class InboundsStatsDto(BaseModel):
     tag: str
     upload: str
     download: str
 
 
-class NodeMetric(BaseModel):
-    """Node metric data (API v1.10)"""
-    node_uuid: str = Field(alias="nodeUuid")
-    node_name: str = Field(alias="nodeName")
-    country_emoji: str = Field(alias="countryEmoji")
-    provider_name: str = Field(alias="providerName")
-    users_online: float = Field(alias="usersOnline")
-    inbounds_stats: List[TrafficStatDto] = Field(alias="inboundsStats")
-    outbounds_stats: List[TrafficStatDto] = Field(alias="outboundsStats")
-
-    @property
-    def uuid(self) -> str:
-        return self.node_uuid
-
-    @property
-    def name(self) -> str:
-        return self.node_name
-
-    @property
-    def connected_users(self) -> float:
-        return self.users_online
-
-    @property
-    def cpu_usage(self) -> None:
-        return None
-
-    @property
-    def memory_usage(self) -> None:
-        return None
-
-    @property
-    def network_upload(self) -> None:
-        return None
-
-    @property
-    def network_download(self) -> None:
-        return None
-
-    @property
-    def uptime(self) -> None:
-        return None
-
-    @property
-    def last_seen(self) -> None:
-        return None
+class SystemNodesDto(BaseModel):
+    node_uuid: str = Field(..., alias="nodeUuid")
+    node_name: str = Field(..., alias="nodeName")
+    country_emoji: str = Field(..., alias="countryEmoji")
+    provider_name: str = Field(..., alias="providerName")
+    users_online: float = Field(..., alias="usersOnline")
+    inbounds_stats: list[InboundsStatsDto] = Field(..., alias="inboundsStats")
+    outbounds_stats: list[InboundsStatsDto] = Field(..., alias="outboundsStats")
 
 
 class GetNodesMetricsResponseDto(BaseModel):
-    nodes: List[NodeMetric]
+    nodes: list[SystemNodesDto]
 
 
-class X25519KeyPair(BaseModel):
-    public_key: str = Field(alias="publicKey")
-    private_key: str = Field(alias="privateKey")
+class KeypairsDto(BaseModel):
+    public_key: str = Field(..., alias="publicKey")
+    private_key: str = Field(..., alias="privateKey")
 
 
 class GetX25519KeyPairResponseDto(BaseModel):
-    key_pairs: List[X25519KeyPair] = Field(alias="keypairs")
+    keypairs: list[KeypairsDto]
 
 
-# OpenAPI v1.10 schema name
-GenerateX25519ResponseDto = GetX25519KeyPairResponseDto
+class SystemSettingsDto(BaseModel):
+    disable_subscription_access_by_path: bool | None = Field(
+        None, alias="disableSubscriptionAccessByPath"
+    )
+
+
+class SystemConditionsDto(BaseModel):
+    header_name: str = Field(..., alias="headerName")
+    operator: ResponseRuleConditionOperator
+    value: str
+    case_sensitive: bool = Field(..., alias="caseSensitive")
+
+
+class SystemHeadersDto(BaseModel):
+    key: str
+    value: str
+
+
+class SystemEncryptionDto(BaseModel):
+    method: EncryptionMethod
+    key: str
+
+
+class SystemResponseModificationsDto(BaseModel):
+    headers: list[SystemHeadersDto] | None = None
+    apply_headers_to_end: bool | None = Field(None, alias="applyHeadersToEnd")
+    subscription_template: str | None = Field(None, alias="subscriptionTemplate")
+    ignore_host_xray_json_template: bool | None = Field(
+        None, alias="ignoreHostXrayJsonTemplate"
+    )
+    ignore_serve_json_at_base_subscription: bool | None = Field(
+        None, alias="ignoreServeJsonAtBaseSubscription"
+    )
+    additional_extended_clients_regex: list[str] | None = Field(
+        None, alias="additionalExtendedClientsRegex"
+    )
+    disable_hwid_check: bool | None = Field(None, alias="disableHwidCheck")
+    encryption: SystemEncryptionDto | None = None
+    exclude_hosts_by_tags: list[str] | None = Field(None, alias="excludeHostsByTags")
+
+
+class SystemRulesDto(BaseModel):
+    name: str
+    description: str | None = None
+    enabled: bool
+    operator: ResponseRuleOperator
+    conditions: list[SystemConditionsDto]
+    response_type: ResponseType = Field(..., alias="responseType")
+    response_modifications: SystemResponseModificationsDto | None = Field(
+        None, alias="responseModifications"
+    )
+
+
+class SystemResponseRulesDto(BaseModel):
+    version: Literal["1"]
+    settings: SystemSettingsDto | None = None
+    rules: list[SystemRulesDto]
 
 
 class DebugSrrMatcherRequestDto(BaseModel):
-    response_rules: ResponseRules = Field(serialization_alias="responseRules")
+    response_rules: SystemResponseRulesDto = Field(
+        ..., serialization_alias="responseRules"
+    )
 
 
-class DebugSrrMatcherData(BaseModel):
+class MatchedRuleDto(BaseModel):
+    name: str
+    description: str | None = None
+    enabled: bool
+    operator: ResponseRuleOperator
+    conditions: list[SystemConditionsDto]
+    response_type: ResponseType = Field(..., alias="responseType")
+    response_modifications: SystemResponseModificationsDto | None = Field(
+        None, alias="responseModifications"
+    )
+
+
+class DebugSrrMatcherResponseDto(BaseModel):
     matched: bool
-    response_type: ResponseType = Field(alias="responseType")
-    matched_rule: Optional[ResponseRule] = Field(alias="matchedRule")
-    input_headers: Dict[str, str] = Field(alias="inputHeaders")
-    output_headers: Dict[str, str] = Field(alias="outputHeaders")
+    response_type: ResponseType = Field(..., alias="responseType")
+    matched_rule: MatchedRuleDto | None = Field(None, alias="matchedRule")
+    input_headers: dict[str, Any] = Field(..., alias="inputHeaders")
+    output_headers: dict[str, Any] = Field(..., alias="outputHeaders")
 
-
-class DebugSrrMatcherResponseDto(DebugSrrMatcherData):
-    pass
 
 class RecapThisMonth(BaseModel):
     users: float
@@ -222,50 +282,46 @@ class RecapTotal(BaseModel):
     users: float
     nodes: float
     traffic: str
-    nodes_ram: str = Field(alias="nodesRam")
-    nodes_cpu_cores: float = Field(alias="nodesCpuCores")
-    distinct_countries: float = Field(alias="distinctCountries")
+    nodes_ram: str = Field(..., alias="nodesRam")
+    nodes_cpu_cores: float = Field(..., alias="nodesCpuCores")
+    distinct_countries: float = Field(..., alias="distinctCountries")
 
 
 class GetRecapResponseDto(BaseModel):
-    this_month: RecapThisMonth = Field(alias="thisMonth")
+    this_month: RecapThisMonth = Field(..., alias="thisMonth")
     total: RecapTotal
     version: str
-    init_date: datetime.datetime = Field(alias="initDate")
+    init_date: datetime = Field(..., alias="initDate")
 
 
-class BuildInfo(BaseModel):
-    """Build information"""
-    time: str
-    number: str
+class SystemUsersDto(BaseModel):
+    created_count: int = Field(..., alias="createdCount")
+    expired_count: int = Field(..., alias="expiredCount")
 
 
-class GitBackendInfo(BaseModel):
-    """Git backend information"""
-    commit_sha: str = Field(alias="commitSha")
-    branch: str
-    commit_url: str = Field(alias="commitUrl")
+class TrafficDto(BaseModel):
+    total_bytes: str = Field(..., alias="totalBytes")
+    by_users_created_in_range_bytes: str = Field(
+        ..., alias="byUsersCreatedInRangeBytes"
+    )
 
 
-class GitFrontendInfo(BaseModel):
-    """Git frontend information"""
-    commit_sha: str = Field(alias="commitSha")
-    commit_url: str = Field(alias="commitUrl")
+class HwidDevicesDto(BaseModel):
+    created_count: int = Field(..., alias="createdCount")
 
 
-class GitInfo(BaseModel):
-    """Git information"""
-    backend: GitBackendInfo
-    frontend: GitFrontendInfo
+class GetStatsDigestResponseDto(BaseModel):
+    users: SystemUsersDto
+    traffic: TrafficDto
+    hwid_devices: HwidDevicesDto = Field(..., alias="hwidDevices")
 
 
-class MetadataResponse(BaseModel):
-    """Metadata response data"""
-    version: str
-    build: BuildInfo
-    git: GitInfo
+class RoutesDto(BaseModel):
+    method: str
+    route: str
+    count: int
 
 
-class GetMetadataResponseDto(MetadataResponse):
-    """Get metadata response"""
-    pass
+class GetHttpStatsResponseDto(BaseModel):
+    routes: list[RoutesDto]
+    total: int

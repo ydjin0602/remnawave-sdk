@@ -1,25 +1,25 @@
-from datetime import datetime
-from typing import Dict, Type
+from datetime import UTC, datetime
 
 import httpx
 
 from remnawave.enums import ErrorCode
+
 from .general import (
     ApiError,
     ApiErrorResponse,
+    AuthenticationError,
     BadRequestError,
+    BusinessLogicError,
     ConflictError,
     ForbiddenError,
+    NetworkError,
     NotFoundError,
     ServerError,
     UnauthorizedError,
     ValidationError,
-    NetworkError,
-    AuthenticationError,
-    BusinessLogicError,
 )
 
-ERRORS: Dict[str, Type[ApiError]] = {
+ERRORS: dict[str, type[ApiError]] = {
     ErrorCode.INTERNAL_SERVER_ERROR: ServerError,
     ErrorCode.LOGIN_ERROR: AuthenticationError,
     ErrorCode.UNAUTHORIZED: UnauthorizedError,
@@ -96,19 +96,16 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.SUBSCRIPTION_SETTINGS_NOT_FOUND: NotFoundError,
     ErrorCode.GET_SUBSCRIPTION_SETTINGS_ERROR: ServerError,
     ErrorCode.UPDATE_SUBSCRIPTION_SETTINGS_ERROR: ServerError,
-    
     ErrorCode.CREATE_SUBSCRIPTION_TEMPLATE_ERROR: ServerError,
     ErrorCode.SUBSCRIPTION_TEMPLATE_NOT_FOUND: NotFoundError,
     ErrorCode.UPDATE_SUBSCRIPTION_TEMPLATE_ERROR: ServerError,
     ErrorCode.DELETE_SUBSCRIPTION_TEMPLATE_ERROR: ServerError,
     ErrorCode.GET_SUBSCRIPTION_TEMPLATE_ERROR: ServerError,
-    
     ErrorCode.CREATE_INBOUND_ERROR: ServerError,
     ErrorCode.DELETE_INBOUND_ERROR: ServerError,
     ErrorCode.GET_INBOUND_ERROR: ServerError,
     ErrorCode.INBOUND_NOT_FOUND: NotFoundError,
     ErrorCode.INBOUND_TAG_ALREADY_EXISTS: ConflictError,
-    
     ErrorCode.CREATE_EXTERNAL_SQUAD_ERROR: ServerError,
     ErrorCode.EXTERNAL_SQUAD_NOT_FOUND: NotFoundError,
     ErrorCode.UPDATE_EXTERNAL_SQUAD_ERROR: ServerError,
@@ -118,7 +115,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.REMOVE_USERS_FROM_EXTERNAL_SQUAD_ERROR: ServerError,
     ErrorCode.GET_EXTERNAL_SQUAD_ERROR: ServerError,
     ErrorCode.GET_ALL_EXTERNAL_SQUADS_ERROR: ServerError,
-    
     ErrorCode.CREATE_INTERNAL_SQUAD_ERROR: ServerError,
     ErrorCode.INTERNAL_SQUAD_NOT_FOUND: NotFoundError,
     ErrorCode.UPDATE_INTERNAL_SQUAD_ERROR: ServerError,
@@ -126,7 +122,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.INTERNAL_SQUAD_NAME_ALREADY_EXISTS: ConflictError,
     ErrorCode.GET_INTERNAL_SQUAD_ERROR: ServerError,
     ErrorCode.GET_ALL_INTERNAL_SQUADS_ERROR: ServerError,
-    
     ErrorCode.CREATE_SNIPPET_ERROR: ServerError,
     ErrorCode.SNIPPET_NOT_FOUND: NotFoundError,
     ErrorCode.UPDATE_SNIPPET_ERROR: ServerError,
@@ -134,7 +129,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.SNIPPET_NAME_ALREADY_EXISTS: ConflictError,
     ErrorCode.GET_SNIPPET_ERROR: ServerError,
     ErrorCode.GET_ALL_SNIPPETS_ERROR: ServerError,
-    
     # Валидационные ошибки
     ErrorCode.VALIDATION_ERROR: ValidationError,
     ErrorCode.INVALID_UUID_FORMAT: ValidationError,
@@ -146,14 +140,12 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.INVALID_ENUM_VALUE: ValidationError,
     ErrorCode.INVALID_REGEX_PATTERN: ValidationError,
     ErrorCode.NUMERIC_VALIDATION_ERROR: ValidationError,
-    
     # Сетевые ошибки
     ErrorCode.NETWORK_ERROR: NetworkError,
     ErrorCode.TIMEOUT_ERROR: NetworkError,
     ErrorCode.CONNECTION_ERROR: NetworkError,
     ErrorCode.DNS_ERROR: NetworkError,
     ErrorCode.SSL_ERROR: NetworkError,
-    
     # Ошибки аутентификации
     ErrorCode.INVALID_TOKEN: AuthenticationError,
     ErrorCode.TOKEN_EXPIRED: AuthenticationError,
@@ -161,7 +153,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.TWO_FACTOR_REQUIRED: AuthenticationError,
     ErrorCode.ACCOUNT_LOCKED: AuthenticationError,
     ErrorCode.PASSWORD_COMPLEXITY_ERROR: ValidationError,
-    
     # Бизнес-логика
     ErrorCode.TRAFFIC_LIMIT_EXCEEDED: BusinessLogicError,
     ErrorCode.USER_LIMIT_EXCEEDED: BusinessLogicError,
@@ -169,7 +160,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.FEATURE_NOT_AVAILABLE: BusinessLogicError,
     ErrorCode.QUOTA_EXCEEDED: BusinessLogicError,
     ErrorCode.RESOURCE_LOCKED: ConflictError,
-    
     # Системные ошибки
     ErrorCode.SYSTEM_STATS_ERROR: ServerError,
     ErrorCode.SYSTEM_HEALTH_ERROR: ServerError,
@@ -177,7 +167,6 @@ ERRORS: Dict[str, Type[ApiError]] = {
     ErrorCode.X25519_KEYGEN_ERROR: ServerError,
     ErrorCode.HAPP_CRYPTO_ERROR: ServerError,
     ErrorCode.SRR_MATCHER_ERROR: ServerError,
-    
     # Настройки Remnawave
     ErrorCode.GET_REMNAWAVE_SETTINGS_ERROR: ServerError,
     ErrorCode.UPDATE_REMNAWAVE_SETTINGS_ERROR: ServerError,
@@ -194,10 +183,15 @@ def handle_api_error(response: httpx.Response) -> None:
         try:
             error_data = response.json()
             error_response = ApiErrorResponse(**error_data)
-            
+
+            # Include validation error details in the message
+            if error_response.errors and not error_response.message.endswith(")"):
+                details = "; ".join(str(e) for e in error_response.errors[:5])
+                error_response.message = f"{error_response.message} ({details})"
+
             # Fill missing fields for API v2 format
             if error_response.timestamp is None:
-                error_response.timestamp = datetime.now()
+                error_response.timestamp = datetime.now(UTC)
             if error_response.path is None:
                 error_response.path = str(response.request.url.path)
             if error_response.code is None:
@@ -215,22 +209,22 @@ def handle_api_error(response: httpx.Response) -> None:
                 exception_class = _get_exception_by_status_code(response.status_code)
 
             raise exception_class(response.status_code, error_response)
-            
+
         except ValueError:
             # JSON parsing failed, create generic error
             raise ApiError(
                 response.status_code,
                 ApiErrorResponse(
-                    timestamp=datetime.now(),
+                    timestamp=datetime.now(UTC),
                     path=str(response.request.url.path),
                     message=f"Unknown error: {response.text}",
                     code="UNKNOWN",
-                    status_code=response.status_code,
+                    statusCode=response.status_code,  # type: ignore[call-arg]
                 ),
             )
 
 
-def _get_exception_by_status_code(status_code: int) -> Type[ApiError]:
+def _get_exception_by_status_code(status_code: int) -> type[ApiError]:
     """Get exception class based on HTTP status code"""
     if status_code == 400:
         return BadRequestError

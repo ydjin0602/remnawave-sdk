@@ -1,21 +1,17 @@
 """Tests for enum completeness against the OpenAPI spec."""
-import pytest
 
 from remnawave.enums import (
     ALPN,
     ClientType,
     Fingerprint,
     OAuth2Provider,
+    ResponseRuleConditionOperator,
+    ResponseRuleOperator,
+    ResponseType,
     SecurityLayer,
     TemplateType,
     TrafficLimitStrategy,
     UserStatus,
-    ResponseRuleConditionOperator,
-    ResponseRuleOperator,
-    ResponseRuleVersion,
-    ResponseType,
-    SubscriptionType,
-    TTorrentBlockerEvents,
 )
 
 
@@ -90,7 +86,17 @@ class TestSecurityLayer:
 
 class TestFingerprint:
     def test_all_api_values(self):
-        api_values = {"chrome", "firefox", "safari", "ios", "android", "edge", "qq", "random", "randomized"}
+        api_values = {
+            "chrome",
+            "firefox",
+            "safari",
+            "ios",
+            "android",
+            "edge",
+            "qq",
+            "random",
+            "randomized",
+        }
         actual = {v.value for v in Fingerprint}
         assert api_values == actual
 
@@ -113,9 +119,16 @@ class TestResponseRuleOperator:
 class TestResponseRuleConditionOperator:
     def test_all_values(self):
         expected = {
-            "EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS",
-            "STARTS_WITH", "NOT_STARTS_WITH", "ENDS_WITH", "NOT_ENDS_WITH",
-            "REGEX", "NOT_REGEX",
+            "EQUALS",
+            "NOT_EQUALS",
+            "CONTAINS",
+            "NOT_CONTAINS",
+            "STARTS_WITH",
+            "NOT_STARTS_WITH",
+            "ENDS_WITH",
+            "NOT_ENDS_WITH",
+            "REGEX",
+            "NOT_REGEX",
         }
         actual = {v.value for v in ResponseRuleConditionOperator}
         assert actual == expected
@@ -124,8 +137,17 @@ class TestResponseRuleConditionOperator:
 class TestResponseType:
     def test_all_values(self):
         expected = {
-            "XRAY_JSON", "XRAY_BASE64", "MIHOMO", "STASH", "CLASH", "SINGBOX",
-            "BROWSER", "BLOCK", "STATUS_CODE_404", "STATUS_CODE_451", "SOCKET_DROP",
+            "XRAY_JSON",
+            "XRAY_BASE64",
+            "MIHOMO",
+            "STASH",
+            "CLASH",
+            "SINGBOX",
+            "BROWSER",
+            "BLOCK",
+            "STATUS_CODE_404",
+            "STATUS_CODE_451",
+            "SOCKET_DROP",
         }
         actual = {v.value for v in ResponseType}
         assert actual == expected

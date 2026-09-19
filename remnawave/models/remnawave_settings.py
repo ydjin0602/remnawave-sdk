@@ -1,123 +1,127 @@
-from typing import List, Optional
-
-from pydantic import BaseModel, Field, HttpUrl
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
 
 
-class PasskeySettings(BaseModel):
-    """Passkey authentication settings"""
+from pydantic import BaseModel, Field
+
+
+class PasskeySettingsDto(BaseModel):
     enabled: bool
-    rp_id: str | None = Field(alias="rpId")
-    origin: str | None
+    rp_id: str | None = Field(None, alias="rpId")
+    origin: str | None = None
 
 
-class GitHubOAuth2Settings(BaseModel):
-    """GitHub OAuth2 settings"""
+class GithubDto(BaseModel):
     enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    allowed_emails: List[str] = Field(alias="allowedEmails")
+    client_id: str | None = Field(None, alias="clientId")
+    client_secret: str | None = Field(None, alias="clientSecret")
+    allowed_emails: list[str] = Field(..., alias="allowedEmails")
 
 
-class PocketIdOAuth2Settings(BaseModel):
-    """PocketID OAuth2 settings"""
+class PocketidDto(BaseModel):
     enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    plain_domain: str | None = Field(alias="plainDomain")
-    allowed_emails: List[str] = Field(alias="allowedEmails")
+    client_id: str | None = Field(None, alias="clientId")
+    client_secret: str | None = Field(None, alias="clientSecret")
+    frontend_domain: str | None = Field(None, alias="frontendDomain")
+    plain_domain: str | None = Field(None, alias="plainDomain")
+    allowed_emails: list[str] = Field(..., alias="allowedEmails")
 
 
-class YandexOAuth2Settings(BaseModel):
-    """Yandex OAuth2 settings"""
+class KeycloakDto(BaseModel):
     enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    allowed_emails: List[str] = Field(alias="allowedEmails")
+    realm: str | None = None
+    client_id: str | None = Field(None, alias="clientId")
+    client_secret: str | None = Field(None, alias="clientSecret")
+    frontend_domain: str | None = Field(None, alias="frontendDomain")
+    keycloak_domain: str | None = Field(None, alias="keycloakDomain")
+    allowed_emails: list[str] = Field(..., alias="allowedEmails")
 
 
-class KeycloakOAuth2Settings(BaseModel):
-    """Keycloak OAuth2 settings"""
+class GenericDto(BaseModel):
     enabled: bool
-    realm: str | None
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    frontend_domain: str | None = Field(alias="frontendDomain")
-    keycloak_domain: str | None = Field(alias="keycloakDomain")
-    allowed_emails: List[str] = Field(alias="allowedEmails")
+    client_id: str | None = Field(None, alias="clientId")
+    client_secret: str | None = Field(None, alias="clientSecret")
+    with_pkce: bool = Field(..., alias="withPkce")
+    authorization_url: str | None = Field(None, alias="authorizationUrl")
+    token_url: str | None = Field(None, alias="tokenUrl")
+    frontend_domain: str | None = Field(None, alias="frontendDomain")
+    allowed_emails: list[str] = Field(..., alias="allowedEmails")
 
 
-class GenericOAuth2Settings(BaseModel):
-    """Generic OAuth2 settings"""
+class TelegramDto(BaseModel):
     enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    with_pkce: bool = Field(alias="withPkce")
-    authorization_url: str | None = Field(alias="authorizationUrl")
-    token_url: str | None = Field(alias="tokenUrl")
-    frontend_domain: str | None = Field(alias="frontendDomain")
-    allowed_emails: List[str] = Field(alias="allowedEmails")
+    client_id: str | None = Field(None, alias="clientId")
+    client_secret: str | None = Field(None, alias="clientSecret")
+    allowed_ids: list[str] = Field(..., alias="allowedIds")
+    frontend_domain: str | None = Field(None, alias="frontendDomain")
 
 
-class TelegramOAuth2Settings(BaseModel):
-    """Telegram OAuth2 settings"""
-    enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    allowed_ids: List[str] = Field(alias="allowedIds")
-    frontend_domain: str | None = Field(alias="frontendDomain")
+class Oauth2SettingsDto(BaseModel):
+    github: GithubDto
+    pocketid: PocketidDto
+    yandex: GithubDto
+    keycloak: KeycloakDto | None = None
+    generic: GenericDto | None = None
+    telegram: TelegramDto | None = None
 
 
-class OAuth2Settings(BaseModel):
-    """OAuth2 authentication settings"""
-    github: GitHubOAuth2Settings
-    pocketid: PocketIdOAuth2Settings
-    yandex: YandexOAuth2Settings
-    keycloak: KeycloakOAuth2Settings
-    generic: GenericOAuth2Settings
-    telegram: TelegramOAuth2Settings
-
-
-class TelegramAuthSettings(BaseModel):
-    """Telegram authentication settings"""
-    enabled: bool
-    client_id: str | None = Field(alias="clientId")
-    client_secret: str | None = Field(alias="clientSecret")
-    allowed_ids: List[str] = Field(alias="allowedIds")
-    frontend_domain: str | None = Field(alias="frontendDomain")
-
-
-class PasswordSettings(BaseModel):
-    """Password authentication settings"""
+class PasswordSettingsDto(BaseModel):
     enabled: bool
 
 
-class BrandingSettings(BaseModel):
-    """Branding settings"""
-    title: Optional[str] = None
-    logo_url: Optional[HttpUrl] = Field(None, alias="logoUrl")
+class BrandingSettingsDto(BaseModel):
+    title: str | None = None
+    logo_url: str | None = Field(None, alias="logoUrl")
 
 
-class RemnawaveSettingsData(BaseModel):
-    """Remnawave settings data"""
-    passkey_settings: PasskeySettings | None = Field(alias="passkeySettings")
-    oauth2_settings: OAuth2Settings | None = Field(alias="oauth2Settings")
-    password_settings: Optional[PasswordSettings] = Field(None, alias="passwordSettings")
-    branding_settings: Optional[BrandingSettings] = Field(None, alias="brandingSettings")
+class GetRemnawaveSettingsResponseDto(BaseModel):
+    passkey_settings: PasskeySettingsDto | None = Field(None, alias="passkeySettings")
+    oauth2_settings: Oauth2SettingsDto | None = Field(None, alias="oauth2Settings")
+    password_settings: PasswordSettingsDto | None = Field(
+        None, alias="passwordSettings"
+    )
+    branding_settings: BrandingSettingsDto | None = Field(
+        None, alias="brandingSettings"
+    )
 
 
-class GetRemnawaveSettingsResponseDto(RemnawaveSettingsData):
-    """Get Remnawave settings response"""
-    pass
+class UpdateRemnawaveSettingsRequestPasskeySettingsDto(BaseModel):
+    enabled: bool
+    rp_id: str | None = Field(None, alias="rpId")
+    origin: str | None = None
+
+
+class UpdateRemnawaveSettingsRequestOauth2SettingsDto(BaseModel):
+    github: GithubDto
+    pocketid: PocketidDto
+    yandex: GithubDto
+    keycloak: KeycloakDto | None = None
+    generic: GenericDto | None = None
+    telegram: TelegramDto | None = None
+
+
+class UpdateRemnawaveSettingsRequestPasswordSettingsDto(BaseModel):
+    enabled: bool
+
+
+class UpdateRemnawaveSettingsRequestBrandingSettingsDto(BaseModel):
+    title: str | None = None
+    logo_url: str | None = Field(None, alias="logoUrl")
 
 
 class UpdateRemnawaveSettingsRequestDto(BaseModel):
-    """Update Remnawave settings request"""
-    passkey_settings: Optional[PasskeySettings] = Field(None, serialization_alias="passkeySettings")
-    oauth2_settings: Optional[OAuth2Settings] = Field(None, serialization_alias="oauth2Settings")
-    password_settings: Optional[PasswordSettings] = Field(None, serialization_alias="passwordSettings")
-    branding_settings: Optional[BrandingSettings] = Field(None, serialization_alias="brandingSettings")
+    passkey_settings: UpdateRemnawaveSettingsRequestPasskeySettingsDto | None = Field(
+        None, serialization_alias="passkeySettings"
+    )
+    oauth2_settings: UpdateRemnawaveSettingsRequestOauth2SettingsDto | None = Field(
+        None, serialization_alias="oauth2Settings"
+    )
+    password_settings: UpdateRemnawaveSettingsRequestPasswordSettingsDto | None = Field(
+        None, serialization_alias="passwordSettings"
+    )
+    branding_settings: UpdateRemnawaveSettingsRequestBrandingSettingsDto | None = Field(
+        None, serialization_alias="brandingSettings"
+    )
 
 
-class UpdateRemnawaveSettingsResponseDto(RemnawaveSettingsData):
-    """Update Remnawave settings response"""
-    pass
+class UpdateRemnawaveSettingsResponseDto(GetRemnawaveSettingsResponseDto):
+    """Alias of GetRemnawaveSettingsResponseDto (envelope unwrapped)."""

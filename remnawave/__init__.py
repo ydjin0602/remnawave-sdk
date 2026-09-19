@@ -1,23 +1,31 @@
 import logging
-from typing import Optional
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from remnawave.controllers import (
     APITokensManagementController,
     AuthController,
     BandWidthStatsController,
     ConfigProfilesController,
+    ConnectionsController,
+    ExternalSquadsController,
     HostsBulkActionsController,
     HostsController,
     HWIDUserController,
-    InboundsBulkActionsController,
-    InboundsController,
     InfraBillingController,
     InternalSquadsController,
     KeygenController,
+    MetadataController,
+    NodePluginsController,
     NodesController,
+    PasskeysController,
+    RemnawaveSettingsController,
+    SnippetsController,
     SubscriptionController,
+    SubscriptionPageConfigController,
+    SubscriptionRequestHistoryController,
     SubscriptionsController,
     SubscriptionsSettingsController,
     SubscriptionsTemplateController,
@@ -25,29 +33,19 @@ from remnawave.controllers import (
     UsersBulkActionsController,
     UsersController,
     WebhookUtility,
-    XrayConfigController,
-    SubscriptionRequestHistoryController,
-    PasskeysController,
-    ExternalSquadsController,
-    SnippetsController,
-    RemnawaveSettingsController,
-    SubscriptionPageConfigController,
-    IpControlController,
-    NodePluginsController,
-    MetadataController,
 )
-    
+
 
 class RemnawaveSDK:
     def __init__(
         self,
-        client: Optional[httpx.AsyncClient] = None,
-        base_url: Optional[str] = None,
-        token: Optional[str] = None,
-        caddy_token: Optional[str] = None,
-        ssl_ignore: Optional[bool] = False,
-        custom_headers: Optional[dict] = None,
-        cookies: Optional[dict] = None,
+        client: httpx.AsyncClient | None = None,
+        base_url: str | None = None,
+        token: str | None = None,
+        caddy_token: str | None = None,
+        ssl_ignore: bool | None = False,
+        custom_headers: dict | None = None,
+        cookies: dict | None = None,
     ):
         """
         Remnawave SDK init
@@ -81,8 +79,7 @@ class RemnawaveSDK:
         self.hosts = HostsController(self._client)
         self.hosts_bulk_actions = HostsBulkActionsController(self._client)
         self.hwid = HWIDUserController(self._client)
-        self.inbounds = InboundsController(self._client)
-        self.inbounds_bulk_actions = InboundsBulkActionsController(self._client)
+        self.connections = ConnectionsController(self._client)
         self.infra_billing = InfraBillingController(self._client)
         self.internal_squads = InternalSquadsController(self._client)
         self.keygen = KeygenController(self._client)
@@ -91,18 +88,18 @@ class RemnawaveSDK:
         self.subscriptions = SubscriptionsController(self._client)
         self.subscriptions_settings = SubscriptionsSettingsController(self._client)
         self.subscriptions_template = SubscriptionsTemplateController(self._client)
-        self.subscription_request_history = SubscriptionRequestHistoryController(self._client)
+        self.subscription_request_history = SubscriptionRequestHistoryController(
+            self._client
+        )
         self.system = SystemController(self._client)
         self.users = UsersController(self._client)
         self.users_bulk_actions = UsersBulkActionsController(self._client)
         self.webhook_utility = WebhookUtility()
-        self.xray_config = XrayConfigController(self._client)
         self.passkeys = PasskeysController(self._client)
         self.external_squads = ExternalSquadsController(self._client)
         self.snippets = SnippetsController(self._client)
         self.remnawave_settings = RemnawaveSettingsController(self._client)
         self.subscription_page_config = SubscriptionPageConfigController(self._client)
-        self.ip_control = IpControlController(self._client)
         self.node_plugins = NodePluginsController(self._client)
         self.metadata = MetadataController(self._client)
 
@@ -114,13 +111,11 @@ class RemnawaveSDK:
                 )
         else:
             if self.base_url is not None or self._token is not None:
-                logging.warning(
+                logger.warning(
                     "base_url and token will be ignored if client is provided"
                 )
             if self.cookies is not None:
-                logging.warning(
-                    "cookies will be ignored if client is provided"
-                )
+                logger.warning("cookies will be ignored if client is provided")
 
     def _prepare_client(self) -> httpx.AsyncClient:
         client_kwargs = {
@@ -130,8 +125,8 @@ class RemnawaveSDK:
         }
         if self.cookies is not None:
             client_kwargs["cookies"] = self.cookies
-        
-        return httpx.AsyncClient(**client_kwargs)
+
+        return httpx.AsyncClient(**client_kwargs)  # type: ignore[arg-type]
 
     def _prepare_headers(self) -> dict:
         headers = {}
@@ -150,14 +145,16 @@ class RemnawaveSDK:
             headers.update(self.custom_headers)
 
         if "http://" in self.base_url:
-            headers["x-forwarded-proto"] = "https"
-            headers["x-forwarded-for"] = "127.0.0.1"
+            lower = {k.lower() for k in headers}
+            if "x-forwarded-proto" not in lower:
+                headers["x-forwarded-proto"] = "https"
+            if "x-forwarded-for" not in lower:
+                headers["x-forwarded-for"] = "127.0.0.1"
 
         return headers
 
     def _prepare_url(self) -> str:
-        if self.base_url.endswith("/"):
-            self.base_url = self.base_url[:-1]
+        self.base_url = self.base_url.removesuffix("/")
 
         if not self.base_url.endswith("/api"):
             self.base_url += "/api"

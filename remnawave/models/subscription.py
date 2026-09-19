@@ -1,256 +1,336 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from remnawave.enums import TrafficLimitStrategy, UserStatus
+from remnawave.enums import TemplateType, TrafficLimitStrategy, UserStatus
 from remnawave.utils.happ_crypt import create_happ_crypto_link
 
 
-class HappCrypto(BaseModel):
-    crypto_link: str = Field(alias="cryptoLink")
+class SubUserDto(BaseModel):
+    short_uuid: str = Field(..., alias="shortUuid")
+    days_left: int = Field(..., alias="daysLeft")
+    traffic_used: str = Field(..., alias="trafficUsed")
+    traffic_limit: str = Field(..., alias="trafficLimit")
+    lifetime_traffic_used: str = Field(..., alias="lifetimeTrafficUsed")
+    traffic_used_bytes: str = Field(..., alias="trafficUsedBytes")
+    traffic_limit_bytes: str = Field(..., alias="trafficLimitBytes")
+    lifetime_traffic_used_bytes: str = Field(..., alias="lifetimeTrafficUsedBytes")
+    username: str
+    expires_at: datetime = Field(..., alias="expiresAt")
+    is_active: bool = Field(..., alias="isActive")
+    user_status: UserStatus = Field(..., alias="userStatus")
+    traffic_limit_strategy: TrafficLimitStrategy = Field(
+        ..., alias="trafficLimitStrategy"
+    )
 
 
-class UserLastConnectedNodeDto(BaseModel):
-    connected_at: datetime = Field(alias="connectedAt")
-    node_name: str = Field(alias="nodeName")
-    country_code: str = Field(alias="countryCode")
+class GetSubscriptionInfoResponseDto(BaseModel):
+    is_found: bool = Field(..., alias="isFound")
+    user: SubUserDto
+    links: list[str]
+    ss_conf_links: dict[str, Any] = Field(..., alias="ssConfLinks")
+    subscription_url: str = Field(..., alias="subscriptionUrl")
 
 
-class ActiveInternalSquadDto(BaseModel):
+class GetAllSubscriptionsResponseDto(BaseModel):
+    subscriptions: list[GetSubscriptionInfoResponseDto]
+    total: float
+
+
+class GetSubscriptionByUsernameResponseDto(GetSubscriptionInfoResponseDto):
+    """Alias of GetSubscriptionInfoResponseDto (envelope unwrapped)."""
+
+
+class GetSubscriptionByShortUUIDResponseDto(GetSubscriptionInfoResponseDto):
+    """Alias of GetSubscriptionInfoResponseDto (envelope unwrapped)."""
+
+
+class GetSubscriptionByIdResponseDto(GetSubscriptionInfoResponseDto):
+    """Alias of GetSubscriptionInfoResponseDto (envelope unwrapped)."""
+
+
+class ActiveInternalSquadsDto(BaseModel):
     uuid: UUID
     name: str
 
 
 class UserTrafficDto(BaseModel):
-    """User traffic information"""
-    used_traffic_bytes: float = Field(alias="usedTrafficBytes")
-    lifetime_used_traffic_bytes: float = Field(alias="lifetimeUsedTrafficBytes")
-    online_at: Optional[datetime] = Field(None, alias="onlineAt")
-    first_connected_at: Optional[datetime] = Field(None, alias="firstConnectedAt")
-    last_connected_node_uuid: Optional[UUID] = Field(None, alias="lastConnectedNodeUuid")
+    used_traffic_bytes: float = Field(..., alias="usedTrafficBytes")
+    lifetime_used_traffic_bytes: float = Field(..., alias="lifetimeUsedTrafficBytes")
+    online_at: datetime | None = Field(None, alias="onlineAt")
+    first_connected_at: datetime | None = Field(None, alias="firstConnectedAt")
+    last_connected_node_uuid: UUID | None = Field(None, alias="lastConnectedNodeUuid")
 
 
-class UserResponseDto(BaseModel):
+class GetRawSubscriptionByShortUuidResponseUserDto(BaseModel):
+    id: int
+    short_uuid: str = Field(..., alias="shortUuid")
+    username: str
+    status: UserStatus
+    traffic_limit_bytes: float = Field(..., alias="trafficLimitBytes")
+    traffic_limit_strategy: TrafficLimitStrategy = Field(
+        ..., alias="trafficLimitStrategy"
+    )
+    expire_at: datetime = Field(..., alias="expireAt")
+    telegram_id: int | None = Field(None, alias="telegramId")
+    email: str | None = None
+    description: str | None = None
+    tag: str | None = None
+    hwid_device_limit: int | None = Field(None, alias="hwidDeviceLimit")
+    external_squad_uuid: UUID | None = Field(None, alias="externalSquadUuid")
+    trojan_password: str = Field(..., alias="trojanPassword")
+    vless_uuid: UUID = Field(..., alias="vlessUuid")
+    ss_password: str = Field(..., alias="ssPassword")
+    last_triggered_threshold: int = Field(..., alias="lastTriggeredThreshold")
+    sub_revoked_at: datetime | None = Field(None, alias="subRevokedAt")
+    last_traffic_reset_at: datetime | None = Field(None, alias="lastTrafficResetAt")
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    subscription_url: str = Field(..., alias="subscriptionUrl")
+    active_internal_squads: list[ActiveInternalSquadsDto] = Field(
+        ..., alias="activeInternalSquads"
+    )
+    user_traffic: UserTrafficDto = Field(..., alias="userTraffic")
+
+
+class HwidCheckupDto(BaseModel):
+    subscription_allowed: bool = Field(..., alias="subscriptionAllowed")
+    max_device_reached: bool = Field(..., alias="maxDeviceReached")
+    hwid_not_supported: bool = Field(..., alias="hwidNotSupported")
+    limit_bypassed: bool = Field(..., alias="limitBypassed")
+
+
+class ConvertedUserInfoDto(BaseModel):
+    days_left: int = Field(..., alias="daysLeft")
+    traffic_limit: str = Field(..., alias="trafficLimit")
+    traffic_used: str = Field(..., alias="trafficUsed")
+    lifetime_traffic_used: str = Field(..., alias="lifetimeTrafficUsed")
+    hwid_checkup: HwidCheckupDto | None = Field(None, alias="hwidCheckup")
+
+
+class ProtocolOptionsDto(BaseModel):
+    encryption: str
+    id: str
+    flow: Literal["", "xtls-rprx-vision", "xtls-rprx-vision-udp443"]
+
+
+class GetRawSubscriptionByShortUuidResponseProtocolOptionsDto(BaseModel):
+    password: str
+
+
+class GetRawSubscriptionByShortUuidResponseProtocolOptionsDto2(BaseModel):
+    method: str
+    password: str
+    uot: bool
+    uot_version: int = Field(..., alias="uotVersion")
+
+
+class GetRawSubscriptionByShortUuidResponseProtocolOptionsDto3(BaseModel):
+    version: int
+
+
+class HeaderDto(BaseModel):
+    type: Literal["none"]
+
+
+class RequestDto(BaseModel):
+    version: str | None = None
+    method: str | None = None
+    path: list[str] | None = None
+    headers: dict[str, Any] | None = None
+
+
+class ResponseDto(BaseModel):
+    version: str | None = None
+    status: str | None = None
+    reason: str | None = None
+    headers: dict[str, Any] | None = None
+
+
+class GetRawSubscriptionByShortUuidResponseHeaderDto(BaseModel):
+    type: Literal["http"]
+    request: RequestDto | None = None
+    response: ResponseDto | None = None
+
+
+class TransportOptionsDto(BaseModel):
+    header: HeaderDto | GetRawSubscriptionByShortUuidResponseHeaderDto | None = None
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto(BaseModel):
+    path: str | None = None
+    host: str | None = None
+    mode: Literal["auto", "packet-up", "stream-up", "stream-one"]
+    extra: dict[str, Any] | None = None
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto2(BaseModel):
+    path: str | None = None
+    host: str | None = None
+    headers: dict[str, Any] | None = None
+    heartbeat_period: float | None = Field(None, alias="heartbeatPeriod")
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto3(BaseModel):
+    path: str | None = None
+    host: str | None = None
+    headers: dict[str, Any] | None = None
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto4(BaseModel):
+    authority: str | None = None
+    service_name: str | None = Field(None, alias="serviceName")
+    multi_mode: bool = Field(..., alias="multiMode")
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto5(BaseModel):
+    client_mtu: int = Field(..., alias="clientMtu")
+    client_tti: int = Field(..., alias="clientTti")
+    congestion: bool
+
+
+class GetRawSubscriptionByShortUuidResponseTransportOptionsDto6(BaseModel):
+    version: int
+    auth: str
+
+
+class SecurityOptionsDto(BaseModel):
+    pinned_peer_cert_sha256: str | None = Field(None, alias="pinnedPeerCertSha256")
+    verify_peer_cert_by_name: str | None = Field(None, alias="verifyPeerCertByName")
+    alpn: str | None = None
+    enable_session_resumption: bool = Field(..., alias="enableSessionResumption")
+    fingerprint: str | None = None
+    server_name: str | None = Field(None, alias="serverName")
+    ech_config_list: str | None = Field(None, alias="echConfigList")
+    ech_force_query: str | None = Field(None, alias="echForceQuery")
+    ech_sockopt: Any | None = Field(None, alias="echSockopt")
+    cipher_suites: str | None = Field(None, alias="cipherSuites")
+
+
+class GetRawSubscriptionByShortUuidResponseSecurityOptionsDto(BaseModel):
+    fingerprint: str
+    public_key: str = Field(..., alias="publicKey")
+    short_id: str | None = Field(None, alias="shortId")
+    server_name: str = Field(..., alias="serverName")
+    spider_x: str | None = Field(None, alias="spiderX")
+    mldsa65_verify: str | None = Field(None, alias="mldsa65Verify")
+
+
+class StreamOverridesDto(BaseModel):
+    final_mask: Any | None = Field(None, alias="finalMask")
+    sockopt: Any | None = None
+
+
+class ClientOverridesDto(BaseModel):
+    shuffle_host: bool = Field(..., alias="shuffleHost")
+    mihomo_x25519: bool = Field(..., alias="mihomoX25519")
+    mihomo_ip_version: str | None = Field(None, alias="mihomoIpVersion")
+    server_description: str | None = Field(None, alias="serverDescription")
+    xray_json_template: Any | None = Field(None, alias="xrayJsonTemplate")
+
+
+class MetadataDto(BaseModel):
     uuid: UUID
-    short_uuid: str = Field(alias="shortUuid")
-    username: str
-    status: UserStatus = Field(default=UserStatus.ACTIVE)
-    user_traffic: UserTrafficDto = Field(alias="userTraffic")
-    sub_last_user_agent: Optional[str] = Field(None, alias="subLastUserAgent")
-    sub_last_opened_at: Optional[datetime] = Field(None, alias="subLastOpenedAt")
-    expire_at: datetime = Field(alias="expireAt")
-    sub_revoked_at: Optional[datetime] = Field(None, alias="subRevokedAt")
-    last_traffic_reset_at: Optional[datetime] = Field(None, alias="lastTrafficResetAt")
-    trojan_password: str = Field(alias="trojanPassword")
-    vless_uuid: UUID = Field(alias="vlessUuid")
-    ss_password: str = Field(alias="ssPassword")
-    description: Optional[str] = None
-    tag: Optional[str] = None
-    telegram_id: Optional[int] = Field(None, alias="telegramId")
-    email: Optional[str] = None
-    hwid_device_limit: Optional[int] = Field(None, alias="hwidDeviceLimit")
-    last_triggered_threshold: int = Field(default=0, alias="lastTriggeredThreshold")
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
-    active_internal_squads: List[ActiveInternalSquadDto] = Field(alias="activeInternalSquads")
-    subscription_url: str = Field(alias="subscriptionUrl")
-    
-    # Legacy alias for backward compatibility
-    @property
-    def used_traffic_bytes(self) -> float:
-        """Backward compatibility property"""
-        return self.user_traffic.used_traffic_bytes
-    
-    @property
-    def lifetime_used_traffic_bytes(self) -> float:
-        """Backward compatibility property"""
-        return self.user_traffic.lifetime_used_traffic_bytes
-    
-    @property
-    def online_at(self) -> Optional[datetime]:
-        """Backward compatibility property"""
-        return self.user_traffic.online_at
-    
-    @property
-    def first_connected_at(self) -> Optional[datetime]:
-        """Backward compatibility property"""
-        return self.user_traffic.first_connected_at
-    
-    @property
-    def last_connected_node_uuid(self) -> Optional[UUID]:
-        """Backward compatibility property"""
-        return self.user_traffic.last_connected_node_uuid
-
-
-class ConvertedUserInfo(BaseModel):
-    days_left: int = Field(alias="daysLeft")
-    traffic_limit: str = Field(alias="trafficLimit")
-    traffic_used: str = Field(alias="trafficUsed")
-    lifetime_traffic_used: str = Field(alias="lifetimeTrafficUsed")
-    is_hwid_limited: bool = Field(alias="isHwidLimited")
-
-
-class Passwords(BaseModel):
-    ss_password: str = Field(alias="ssPassword")
-    trojan_password: str = Field(alias="trojanPassword")
-    vless_password: str = Field(alias="vlessPassword")
-
-
-class RawHostAdditionalParams(BaseModel):
-    mode: Optional[str] = None
-    heartbeat_period: Optional[float] = Field(None, alias="heartbeatPeriod")
-
-
-class RawHostProtocolOptions(BaseModel):
-    class SSOptions(BaseModel):
-        method: Optional[str] = None
-    
-    ss: Optional[SSOptions] = None
-
-
-class RawHostDbData(BaseModel):
-    raw_inbound: Optional[Dict[str, Any]] = Field(None, alias="rawInbound")
-    inbound_tag: str = Field(alias="inboundTag")
-    uuid: str
-    config_profile_uuid: Optional[str] = Field(None, alias="configProfileUuid")
-    config_profile_inbound_uuid: Optional[str] = Field(None, alias="configProfileInboundUuid")
-    is_disabled: bool = Field(alias="isDisabled")
-    view_position: int = Field(alias="viewPosition") 
+    tags: list[str]
+    exclude_from_subscription_types: list[TemplateType] = Field(
+        ..., alias="excludeFromSubscriptionTypes"
+    )
+    inbound_tag: str = Field(..., alias="inboundTag")
+    config_profile_uuid: UUID | None = Field(None, alias="configProfileUuid")
+    config_profile_inbound_uuid: UUID | None = Field(
+        None, alias="configProfileInboundUuid"
+    )
+    is_disabled: bool = Field(..., alias="isDisabled")
+    is_hidden: bool = Field(..., alias="isHidden")
+    view_position: int = Field(..., alias="viewPosition")
     remark: str
-    is_hidden: bool = Field(alias="isHidden")
-    tag: Optional[str] = None
-    vless_route_id: Optional[int] = Field(None, alias="vlessRouteId")
-
-class RawSettings(BaseModel):
-    """Raw settings for network configuration"""
-    header_type: Optional[str] = Field(None, alias="headerType")
-    request: Optional[Dict[str, Any]] = None
-
-class RawHost(BaseModel):
-    password: Passwords 
-    address: Optional[str] = None
-    alpn: Optional[str] = None
-    fingerprint: Optional[str] = None
-    host: Optional[str] = None
-    network: Optional[str] = None
-    path: Optional[str] = None
-    public_key: Optional[str] = Field(None, alias="publicKey")
-    port: Optional[float] = None
-    protocol: Optional[str] = None
-    remark: Optional[str] = None
-    short_id: Optional[str] = Field(None, alias="shortId")
-    sni: Optional[str] = None
-    spider_x: Optional[str] = Field(None, alias="spiderX")
-    tls: Optional[str] = None
-    raw_settings: Optional[RawSettings] = Field(None, alias="rawSettings")
-    additional_params: Optional[RawHostAdditionalParams] = Field(None, alias="additionalParams")
-    x_http_extra_params: Optional[Dict[str, Any]] = Field(None, alias="xHttpExtraParams")
-    mux_params: Optional[Dict[str, Any]] = Field(None, alias="muxParams")
-    sockopt_params: Optional[Dict[str, Any]] = Field(None, alias="sockoptParams")
-    server_description: Optional[str] = Field(None, alias="serverDescription")
-    flow: Optional[str] = None
-    allow_insecure: Optional[bool] = Field(None, alias="allowInsecure")
-    shuffle_host: Optional[bool] = Field(None, alias="shuffleHost")
-    mihomo_x25519: Optional[bool] = Field(None, alias="mihomoX25519")
-    mldsa65_verify: Optional[str] = Field(None, alias="mldsa65Verify")
-    encryption: Optional[str] = None
-    protocol_options: Optional[RawHostProtocolOptions] = Field(None, alias="protocolOptions")
-    db_data: Optional[RawHostDbData] = Field(None, alias="dbData")
-    xray_json_template: Optional[Dict[str, Any]] = Field(None, alias="xrayJsonTemplate")
+    vless_route_id: int | None = Field(None, alias="vlessRouteId")
+    raw_inbound: Any | None = Field(None, alias="rawInbound")
 
 
-class RawSubscriptionResponse(BaseModel):
-    """Raw subscription response data"""
-    user: UserResponseDto
-    converted_user_info: ConvertedUserInfo = Field(alias="convertedUserInfo")
-    headers: Dict[str, str]
-    raw_hosts: Optional[List[RawHost]] = Field(None, alias="rawHosts")
+class ResolvedProxyConfigsDto(BaseModel):
+    final_remark: str = Field(..., alias="finalRemark")
+    address: str
+    port: int
+    protocol: Literal["vless", "trojan", "shadowsocks", "hysteria"]
+    protocol_options: (
+        ProtocolOptionsDto
+        | GetRawSubscriptionByShortUuidResponseProtocolOptionsDto
+        | GetRawSubscriptionByShortUuidResponseProtocolOptionsDto2
+        | GetRawSubscriptionByShortUuidResponseProtocolOptionsDto3
+    ) = Field(..., alias="protocolOptions")
+    transport: Literal["tcp", "xhttp", "ws", "httpupgrade", "grpc", "kcp", "hysteria"]
+    transport_options: (
+        TransportOptionsDto
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto2
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto3
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto4
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto5
+        | GetRawSubscriptionByShortUuidResponseTransportOptionsDto6
+    ) = Field(..., alias="transportOptions")
+    security: Literal["tls", "reality", "none"]
+    security_options: (
+        SecurityOptionsDto
+        | GetRawSubscriptionByShortUuidResponseSecurityOptionsDto
+        | None
+    ) = Field(None, alias="securityOptions")
+    stream_overrides: StreamOverridesDto = Field(..., alias="streamOverrides")
+    mux: Any | None = None
+    client_overrides: ClientOverridesDto = Field(..., alias="clientOverrides")
+    metadata: MetadataDto
 
 
-class GetRawSubscriptionByShortUuidResponseDto(RawSubscriptionResponse):
-    pass
-
-# Legacy alias for backward compatibility
-class UserSubscription(BaseModel):
-    short_uuid: str = Field(alias="shortUuid")
-    username: str
-    days_left: float = Field(alias="daysLeft")
-    traffic_used: str = Field(alias="trafficUsed")
-    traffic_limit: str = Field(alias="trafficLimit")
-    lifetime_traffic_used: str = Field(alias="lifetimeTrafficUsed")
-    traffic_used_bytes: str = Field(alias="trafficUsedBytes")
-    traffic_limit_bytes: str = Field(alias="trafficLimitBytes")
-    lifetime_traffic_used_bytes: str = Field(alias="lifetimeTrafficUsedBytes")
-    traffic_limit_strategy: TrafficLimitStrategy = Field(alias="trafficLimitStrategy")
-    expires_at: datetime = Field(alias="expiresAt")
-    user_status: UserStatus = Field(alias="userStatus")
-    is_active: bool = Field(alias="isActive")
+class GetRawSubscriptionByShortUuidResponseDto(BaseModel):
+    user: GetRawSubscriptionByShortUuidResponseUserDto
+    converted_user_info: ConvertedUserInfoDto = Field(..., alias="convertedUserInfo")
+    headers: dict[str, Any]
+    resolved_proxy_configs: list[ResolvedProxyConfigsDto] = Field(
+        ..., alias="resolvedProxyConfigs"
+    )
 
 
-class SubscriptionInfoData(BaseModel):
-    is_found: bool = Field(alias="isFound")
-    user: UserSubscription
-    links: List[str]
-    ss_conf_links: Dict[str, str] = Field(alias="ssConfLinks")
-    subscription_url: str = Field(alias="subscriptionUrl")
-    happ: HappCrypto
+class GetSubpageConfigByShortUuidRequestBodyDto(BaseModel):
+    request_headers: dict[str, Any] = Field(..., serialization_alias="requestHeaders")
 
 
-class GetSubscriptionInfoResponseDto(BaseModel):
-    is_found: bool = Field(alias="isFound")
-    user: UserSubscription
-    links: List[str]
-    ss_conf_links: Dict[str, str] = Field(alias="ssConfLinks")
-    subscription_url: str = Field(alias="subscriptionUrl")
-    
+class GetSubpageConfigByShortUuidResponseDto(BaseModel):
+    subpage_config_uuid: UUID | None = Field(None, alias="subpageConfigUuid")
+    webpage_allowed: bool = Field(..., alias="webpageAllowed")
+
+
+class GetConnectionKeysByUuidResponseDto(BaseModel):
+    enabled_keys: list[str] = Field(..., alias="enabledKeys")
+    hidden_keys: list[str] = Field(..., alias="hiddenKeys")
+    disabled_keys: list[str] = Field(..., alias="disabledKeys")
+
+
+class HappCrypto(BaseModel):
+    """HAPP crypto link (generated client-side)"""
+
+    crypto_link: str = Field(alias="cryptoLink")
+
+
+def _attach_happ(cls):
     @property
     def happ(self) -> HappCrypto:
         """Generate HAPP link on the fly"""
         crypto_link = create_happ_crypto_link(self.subscription_url)
-        return HappCrypto(crypto_link=crypto_link)
+        return HappCrypto(cryptoLink=crypto_link)
+
+    cls.happ = happ
+    return cls
 
 
-class SubscriptionWithoutHapp(BaseModel):
-    is_found: bool = Field(alias="isFound")
-    user: UserSubscription
-    links: List[str]
-    ss_conf_links: Dict[str, str] = Field(alias="ssConfLinks")
-    subscription_url: str = Field(alias="subscriptionUrl")
-
-
-class GetAllSubscriptionsResponseDto(BaseModel):
-    subscriptions: List[SubscriptionWithoutHapp]
-    total: float
-
-
-class GetSubscriptionByUsernameResponseDto(BaseModel):
-    is_found: bool = Field(alias="isFound")
-    user: UserSubscription
-    links: List[str]
-    ss_conf_links: Dict[str, str] = Field(alias="ssConfLinks")
-    subscription_url: str = Field(alias="subscriptionUrl")
-
-
-class GetSubscriptionByShortUUIDResponseDto(GetSubscriptionByUsernameResponseDto):
-    pass
-
-
-class GetSubscriptionByUUIDResponseDto(GetSubscriptionByUsernameResponseDto):
-    pass
-
-
-class GetConnectionKeysByUuidResponseDto(BaseModel):
-    enabled_keys: List[str] = Field(alias="enabledKeys")
-    hidden_keys: List[str] = Field(alias="hiddenKeys")
-    disabled_keys: List[str] = Field(alias="disabledKeys")
-
-    @property
-    def connection_keys(self) -> List[str]:
-        """Backward compatibility: historically SDK exposed a flat list of keys."""
-        return self.enabled_keys
-
-
-# Legacy alias for backward compatibility
-SubscriptionInfoResponseDto = GetSubscriptionInfoResponseDto
+for _cls in (
+    GetSubscriptionInfoResponseDto,
+    GetAllSubscriptionsResponseDto,
+    GetSubscriptionByUsernameResponseDto,
+    GetSubscriptionByShortUUIDResponseDto,
+    GetSubscriptionByIdResponseDto,
+):
+    _attach_happ(_cls)

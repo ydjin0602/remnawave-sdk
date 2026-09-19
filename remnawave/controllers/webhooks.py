@@ -1,24 +1,29 @@
-import hmac
 import hashlib
+import hmac
 import json
-from typing import Union, Optional
+
+from pydantic import BaseModel
 
 from remnawave.models.webhook import (
-    WebhookPayloadDto,
-    UserDto,
-    NodeDto,
-    HwidUserDeviceDto,
-    LoginAttemptDto,
-    UserHwidDeviceEventDto,
+    WebhookCrmEventsDto,
+    WebhookErrorsEventsDto,
+    WebhookNodeEventsDto,
+    WebhookServiceEventsDto,
+    WebhookTorrentBlockerEventsDto,
+    WebhookUserDto,
+    WebhookUserEventsDto,
+    WebhookUserHwidDeviceDto,
+    WebhookUserHwidDevicesEventsDto,
 )
+
 
 class WebhookHeadersDto:
     """Helper class for webhook headers"""
-    
+
     def __init__(self, signature: str, timestamp: str):
         self.signature = signature
         self.timestamp = timestamp
-    
+
     @classmethod
     def from_headers(cls, headers: dict[str, str]) -> "WebhookHeadersDto":
         """
@@ -27,26 +32,47 @@ class WebhookHeadersDto:
         """
         signature = None
         timestamp = None
-        
+
         for key, value in headers.items():
             lower_key = key.lower()
             if lower_key == "x-remnawave-signature":
                 signature = value
             elif lower_key == "x-remnawave-timestamp":
                 timestamp = value
-        
+
         if not signature or not timestamp:
             raise ValueError("Missing required webhook headers")
-        
+
         return cls(signature=signature, timestamp=timestamp)
+
+
+EventDto = (
+    WebhookUserEventsDto
+    | WebhookUserHwidDevicesEventsDto
+    | WebhookNodeEventsDto
+    | WebhookServiceEventsDto
+    | WebhookCrmEventsDto
+    | WebhookErrorsEventsDto
+    | WebhookTorrentBlockerEventsDto
+)
+
+_EVENT_MODELS: dict[str, tuple[str, type[BaseModel]]] = {
+    "user": ("user", WebhookUserEventsDto),
+    "user_hwid_devices": ("user_hwid_devices", WebhookUserHwidDevicesEventsDto),
+    "node": ("node", WebhookNodeEventsDto),
+    "service": ("service", WebhookServiceEventsDto),
+    "crm": ("crm", WebhookCrmEventsDto),
+    "errors": ("errors", WebhookErrorsEventsDto),
+    "torrent_blocker": ("torrent_blocker", WebhookTorrentBlockerEventsDto),
+}
 
 
 class WebhookUtility:
     @staticmethod
     def validate_webhook(
-        body: Union[str, dict],
+        body: str | dict,
         signature: str,
-        webhook_secret: str
+        webhook_secret: str,
     ) -> bool:
         """
         Validates the webhook's authenticity using HMAC SHA-256.
@@ -59,58 +85,70 @@ class WebhookUtility:
         if isinstance(body, str):
             original_body = body
         else:
-            original_body = json.dumps(body, separators=(',', ':'))
+            original_body = json.dumps(body, separators=(",", ":"))
 
-        computed_signature = hmac.new(
-            webhook_secret.encode('utf-8'),
-            original_body.encode('utf-8'),
-            hashlib.sha256
-        ).hexdigest()
-
-        return hmac.compare_digest(computed_signature, signature)
+        key = webhook_secret.encode("utf-8")
+        hmac_new = hmac.new(key, original_body.encode("utf-8"), hashlib.sha256)
+        expected_signature = hmac_new.hexdigest()
+        return hmac.compare_digest(expected_signature, signature)
 
     @staticmethod
     def validate_webhook_with_headers(
-        body: Union[str, dict],
-        headers: Union[dict[str, str], WebhookHeadersDto],
-        webhook_secret: str
+        body: str | dict,
+        headers: dict[str, str] | WebhookHeadersDto,
+        webhook_secret: str,
     ) -> bool:
         """
-        Validates the webhook using headers object.
+        Validates the webhook's authenticity using HMAC SHA-256 and webhook headers.
 
-        :param body: The webhook request body.
+        :param body: The webhook request body (either a JSON string or a parsed dictionary).
         :param headers: Dictionary with headers or WebhookHeadersDto object.
         :param webhook_secret: The secret key used to compute the HMAC.
         :return: True if the signature matches, otherwise False.
         """
-        if isinstance(headers, dict):
+        if not isinstance(headers, WebhookHeadersDto):
             headers = WebhookHeadersDto.from_headers(headers)
-        
-        return WebhookUtility.validate_webhook(body, headers.signature, webhook_secret)
+
+        return WebhookUtility.validate_webhook(
+            body=body, signature=headers.signature, webhook_secret=webhook_secret
+        )
 
     @staticmethod
     def parse_webhook(
-        body: Union[str, dict],
-        headers: Union[dict[str, str], WebhookHeadersDto],
+        body: str | dict,
+        headers: dict[str, str] | WebhookHeadersDto,
         webhook_secret: str,
-        validate: bool = True
-    ) -> Optional[WebhookPayloadDto]:
+        validate: bool = True,
+    ) -> EventDto | None:
         """
         Parses and optionally validates the webhook payload.
+
+        Returns the scope-specific typed event DTO
+        (WebhookUserEventsDto, WebhookNodeEventsDto, ...) or None if validation fails.
 
         :param body: The webhook request body.
         :param headers: Dictionary with headers or WebhookHeadersDto object.
         :param webhook_secret: The secret key used to compute the HMAC.
         :param validate: Whether to validate the webhook signature (default: True).
-        :return: Parsed WebhookPayloadDto or None if validation fails.
         """
-        if validate and not WebhookUtility.validate_webhook_with_headers(body, headers, webhook_secret):
+        if validate and not WebhookUtility.validate_webhook_with_headers(
+            body, headers, webhook_secret
+        ):
             return None
 
         if isinstance(body, str):
             body = json.loads(body)
 
-        return WebhookPayloadDto.from_dict(body)
+        scope = body.get("scope") if isinstance(body, dict) else None
+        model = _EVENT_MODELS.get(scope)
+        if model is None:
+            return None
+        try:
+            return model[1].model_validate(body)  # type: ignore[return-value]
+        except Exception:  # noqa: BLE001 - best-effort typed parse
+            return None
+
+    # ---- scope checks ----
 
     @staticmethod
     def is_user_event(event: str) -> bool:
@@ -147,37 +185,30 @@ class WebhookUtility:
         """Check if event is an errors event."""
         return event.startswith("errors.")
 
+    # ---- typed accessors ----
+
     @staticmethod
-    def get_typed_data(payload: WebhookPayloadDto) -> Union[UserDto, NodeDto, HwidUserDeviceDto, LoginAttemptDto, UserHwidDeviceEventDto, dict]:
+    def get_typed_data(payload: EventDto) -> dict | object:
         """
-        Get typed data from webhook payload based on event type.
-        
-        :param payload: Parsed webhook payload.
-        :return: Typed data object.
+        Get typed data from a parsed webhook event DTO.
         """
         return payload.data
 
     @staticmethod
-    def extract_user_hwid_event_data(payload: WebhookPayloadDto) -> Optional[tuple[UserDto, HwidUserDeviceDto]]:
+    def extract_user_hwid_event_data(
+        payload: WebhookUserHwidDevicesEventsDto,
+    ) -> tuple[WebhookUserDto, WebhookUserHwidDeviceDto] | None:
         """
-        Extract user and HWID device from user_hwid_devices event.
-        
-        :param payload: Parsed webhook payload.
-        :return: Tuple of (UserDto, HwidUserDeviceDto) or None if not a HWID event.
+        Extract user and HWID device from a user_hwid_devices event.
+
+        :param payload: Parsed WebhookUserHwidDevicesEventsDto.
+        :return: Tuple of (WebhookUserDto, WebhookUserHwidDeviceDto) or None.
         """
-        if not WebhookUtility.is_user_hwid_devices_event(payload.event):
+        data = payload.data
+        user = getattr(data, "user", None)
+        device = getattr(data, "hwid_user_device", None) or getattr(
+            data, "hwidUserDevice", None
+        )
+        if user is None or device is None:
             return None
-
-        if isinstance(payload.data, UserHwidDeviceEventDto):
-            return (payload.data.user, payload.data.hwid_user_device)
-
-        if isinstance(payload.data, dict):
-            user_data = payload.data.get("user", {})
-            hwid_data = payload.data.get("hwidUserDevice", {})
-            
-            return (
-                UserDto(**user_data),
-                HwidUserDeviceDto(**hwid_data)
-            )
-        
-        return None
+        return (user, device)

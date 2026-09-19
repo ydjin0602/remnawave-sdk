@@ -1,133 +1,144 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from enum import StrEnum
-from typing import Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from remnawave.models import CustomRemarksDto, HwidSettingsDto
+
+from remnawave.enums import TemplateType
 
 
-class TemplateType(StrEnum):
-    """Template type enum"""
-    XRAY_JSON = "XRAY_JSON"
-    XRAY_BASE64 = "XRAY_BASE64"
-    MIHOMO = "MIHOMO"
-    STASH = "STASH"
-    CLASH = "CLASH"
-    SINGBOX = "SINGBOX"
+class InfoDto(BaseModel):
+    members_count: int = Field(..., alias="membersCount")
 
 
-class ExternalSquadInfoDto(BaseModel):
-    """External squad info"""
-    members_count: float = Field(alias="membersCount")
+class TemplatesDto(BaseModel):
+    template_uuid: UUID = Field(..., alias="templateUuid")
+    template_type: TemplateType = Field(..., alias="templateType")
 
 
-class ExternalSquadTemplateDto(BaseModel):
-    """External squad template"""
-    template_uuid: UUID = Field(alias="templateUuid")
-    template_type: TemplateType = Field(alias="templateType")
+class SubscriptionSettingsDto(BaseModel):
+    serve_json_at_base_subscription: bool | None = Field(
+        None, alias="serveJsonAtBaseSubscription"
+    )
+    is_show_custom_remarks: bool | None = Field(None, alias="isShowCustomRemarks")
+    randomize_hosts: bool | None = Field(None, alias="randomizeHosts")
 
 
-class ExternalSquadSubscriptionSettingsDto(BaseModel):
-    """External squad subscription settings"""
-    profile_title: Optional[str] = Field(None, alias="profileTitle")
-    support_link: Optional[str] = Field(None, alias="supportLink")
-    profile_update_interval: Optional[int] = Field(None, alias="profileUpdateInterval", ge=1)
-    is_profile_webpage_url_enabled: Optional[bool] = Field(None, alias="isProfileWebpageUrlEnabled")
-    serve_json_at_base_subscription: Optional[bool] = Field(None, alias="serveJsonAtBaseSubscription")
-    is_show_custom_remarks: Optional[bool] = Field(None, alias="isShowCustomRemarks")
-    happ_announce: Optional[str] = Field(None, alias="happAnnounce")
-    happ_routing: Optional[str] = Field(None, alias="happRouting")
-    randomize_hosts: Optional[bool] = Field(None, alias="randomizeHosts")
-
-class ExternalSquadHostOverridesDto(BaseModel):
-    """External squad host overrides"""
-    server_description: Optional[str] = Field(None, alias="serverDescription", max_length=30)
-    vless_route_id: Optional[int] = Field(None, alias="vlessRouteId", ge=0, le=65535)
+class HostOverridesDto(BaseModel):
+    server_description: str | None = Field(None, alias="serverDescription")
+    vless_route_id: int | None = Field(None, alias="vlessRouteId")
 
 
-class ExternalSquadDto(BaseModel):
-    """External squad data model"""
+class HwidSettingsDto(BaseModel):
+    enabled: bool
+    fallback_device_limit: float = Field(..., alias="fallbackDeviceLimit")
+    max_devices_announce: str | None = Field(None, alias="maxDevicesAnnounce")
+
+
+class CustomRemarksDto(BaseModel):
+    expired_users: list[str] = Field(..., alias="expiredUsers")
+    limited_users: list[str] = Field(..., alias="limitedUsers")
+    disabled_users: list[str] = Field(..., alias="disabledUsers")
+    empty_hosts: list[str] = Field(..., alias="emptyHosts")
+    hwid_max_devices_exceeded: list[str] = Field(..., alias="HWIDMaxDevicesExceeded")
+    hwid_not_supported: list[str] = Field(..., alias="HWIDNotSupported")
+
+
+class ExternalSquadsDto(BaseModel):
     uuid: UUID
-    view_position: int = Field(alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     name: str
-    info: ExternalSquadInfoDto
-    templates: List[ExternalSquadTemplateDto]
-    subscription_settings: Optional[ExternalSquadSubscriptionSettingsDto] = Field(None, alias="subscriptionSettings")
-    host_overrides: Optional[ExternalSquadHostOverridesDto] = Field(None, alias="hostOverrides")
-    response_headers: Optional[Dict[str, str]] = Field(None, alias="responseHeaders")
-    hwid_settings: Optional[HwidSettingsDto] = Field(None, alias="hwidSettings")
-    custom_remarks: Optional[CustomRemarksDto] = Field(None, alias="customRemarks")
-    subpage_config_uuid: Optional[UUID] = Field(None, alias="subpageConfigUuid")
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
+    info: InfoDto
+    templates: list[TemplatesDto]
+    subscription_settings: SubscriptionSettingsDto | None = Field(
+        None, alias="subscriptionSettings"
+    )
+    host_overrides: HostOverridesDto | None = Field(None, alias="hostOverrides")
+    response_headers_add: dict[str, Any] = Field(..., alias="responseHeadersAdd")
+    response_headers_remove: list[str] = Field(..., alias="responseHeadersRemove")
+    hwid_settings: HwidSettingsDto | None = Field(None, alias="hwidSettings")
+    custom_remarks: CustomRemarksDto | None = Field(None, alias="customRemarks")
+    subpage_config_uuid: UUID | None = Field(None, alias="subpageConfigUuid")
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
 
 
-# Request/Response models
 class GetExternalSquadsResponseDto(BaseModel):
-    """Response with all external squads"""
-    total: float = Field(alias="total")
-    external_squads: List[ExternalSquadDto] = Field(alias="externalSquads")
+    total: float
+    external_squads: list[ExternalSquadsDto] = Field(..., alias="externalSquads")
 
 
-class GetExternalSquadByUuidResponseDto(ExternalSquadDto):
-    """Response with external squad by UUID"""
-    pass
+class GetExternalSquadByUuidResponseDto(ExternalSquadsDto):
+    """Alias of ExternalSquadsDto (envelope unwrapped)."""
 
 
 class CreateExternalSquadRequestDto(BaseModel):
-    """Request to create external squad"""
-    name: str = Field(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")
+    name: str
 
 
-class CreateExternalSquadResponseDto(ExternalSquadDto):
-    """Response after creating external squad"""
-    pass
+class CreateExternalSquadResponseDto(ExternalSquadsDto):
+    """Alias of ExternalSquadsDto (envelope unwrapped)."""
+
+
+class UpdateExternalSquadRequestTemplatesDto(BaseModel):
+    template_uuid: UUID = Field(..., alias="templateUuid")
+    template_type: TemplateType = Field(..., alias="templateType")
+
+
+class UpdateExternalSquadRequestSubscriptionSettingsDto(BaseModel):
+    serve_json_at_base_subscription: bool | None = Field(
+        None, alias="serveJsonAtBaseSubscription"
+    )
+    is_show_custom_remarks: bool | None = Field(None, alias="isShowCustomRemarks")
+    randomize_hosts: bool | None = Field(None, alias="randomizeHosts")
+
+
+class UpdateExternalSquadRequestHostOverridesDto(BaseModel):
+    server_description: str | None = Field(None, alias="serverDescription")
+    vless_route_id: int | None = Field(None, alias="vlessRouteId")
 
 
 class UpdateExternalSquadRequestDto(BaseModel):
-    """Request to update external squad"""
     uuid: UUID
-    name: Optional[str] = Field(None, min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")
-    templates: Optional[List[ExternalSquadTemplateDto]] = None
-    subscription_settings: Optional[ExternalSquadSubscriptionSettingsDto] = Field(None, serialization_alias="subscriptionSettings")
-    host_overrides: Optional[ExternalSquadHostOverridesDto] = Field(None, serialization_alias="hostOverrides")
-    hwid_settings: Optional[HwidSettingsDto] = Field(None, alias="hwidSettings")
-    custom_remarks: Optional[CustomRemarksDto] = Field(None, alias="customRemarks")
-    response_headers: Optional[Dict[str, str]] = Field(None, serialization_alias="responseHeaders")
-    subpage_config_uuid: Optional[UUID] = Field(None, serialization_alias="subpageConfigUuid")
+    name: str | None = None
+    templates: list[UpdateExternalSquadRequestTemplatesDto] | None = None
+    subscription_settings: UpdateExternalSquadRequestSubscriptionSettingsDto | None = (
+        Field(None, serialization_alias="subscriptionSettings")
+    )
+    host_overrides: UpdateExternalSquadRequestHostOverridesDto | None = Field(
+        None, serialization_alias="hostOverrides"
+    )
+    response_headers_add: dict[str, Any] | None = Field(
+        None, serialization_alias="responseHeadersAdd"
+    )
+    response_headers_remove: list[str] | None = Field(
+        None, serialization_alias="responseHeadersRemove"
+    )
+    hwid_settings: HwidSettingsDto | None = Field(
+        None, serialization_alias="hwidSettings"
+    )
+    custom_remarks: CustomRemarksDto | None = Field(
+        None, serialization_alias="customRemarks"
+    )
+    subpage_config_uuid: UUID | None = Field(
+        None, serialization_alias="subpageConfigUuid"
+    )
 
 
-class UpdateExternalSquadResponseDto(ExternalSquadDto):
-    """Response after updating external squad"""
-    pass
+class UpdateExternalSquadResponseDto(ExternalSquadsDto):
+    """Alias of ExternalSquadsDto (envelope unwrapped)."""
 
 
-class DeleteExternalSquadResponseDto(BaseModel):
-    """Response after deleting external squad"""
-    is_deleted: bool = Field(alias="isDeleted")
-
-
-class ReorderExternalSquadItem(BaseModel):
-    view_position: int = Field(serialization_alias="viewPosition")
+class ItemsDto(BaseModel):
+    view_position: int = Field(..., alias="viewPosition")
     uuid: UUID
 
 
 class ReorderExternalSquadsRequestDto(BaseModel):
-    items: List[ReorderExternalSquadItem]
+    items: list[ItemsDto]
 
 
-class ReorderExternalSquadsResponseDto(BaseModel):
-    """Response after reordering external squads"""
-    total: float = Field(alias="total")
-    external_squads: List[ExternalSquadDto] = Field(alias="externalSquads")
-
-
-class AddUsersToExternalSquadResponseDto(BaseModel):
-    """Response after adding users to external squad"""
-    event_sent: bool = Field(alias="eventSent")
-
-
-class RemoveUsersFromExternalSquadResponseDto(BaseModel):
-    """Response after removing users from external squad"""
-    event_sent: bool = Field(alias="eventSent")
+class ReorderExternalSquadsResponseDto(GetExternalSquadsResponseDto):
+    """Alias of GetExternalSquadsResponseDto (envelope unwrapped)."""

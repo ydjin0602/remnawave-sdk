@@ -50,7 +50,8 @@ pip install git+https://github.com/remnawave/python-sdk.git@development
 
 | Contract Version | Remnawave Panel Version |
 | ---------------- | ----------------------- |
-| 2.8.0            | >=2.8.0                 |
+| 3.2.3            | >=3.2.3                 |
+| 2.8.0            | >=2.8.0, <3.0.0         |
 | 2.7.0            | >=2.7.0                 |
 | 2.6.3            | >=2.6.3                 |
 | 2.6.2            | >=2.6.2                 |
@@ -116,6 +117,41 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+---
+
+## 🧪 Testing
+
+The test-suite boots a **disposable Remnawave stack** with [testcontainers](https://testcontainers-python.readthedocs.io/):
+`postgres:18` + `valkey:9` + `remnawave/backend:3.2.3` **+ a real `remnawave/node:3.2.2` with Xray-core** are started in a Docker
+network. The first admin and a wildcard API-token are created automatically, reference fixtures (config profile, inbound, user)
+are seeded, and the node is created in the panel with a generated secret key and connected before the tests run — so even
+node-dependent endpoints (plugin executor, connections, bandwidth stats) are tested for real.
+
+```bash
+# run everything (requires a Docker daemon)
+pytest tests/
+
+# keep the stack alive after a run for manual inspection
+REMNAWAVE_TEST_KEEP_STACK=1 pytest tests/test_users.py
+
+# pin other images
+REMNAWAVE_TEST_PANEL_IMAGE=remnawave/backend:3.4.4 pytest tests/
+REMNAWAVE_TEST_NODE_IMAGE=remnawave/node:3.4.1 pytest tests/
+
+# run without the xray node container (node-dependent tests still work against a disconnected node)
+REMNAWAVE_TEST_WITH_NODE=0 pytest tests/
+```
+
+To run against your **own** panel instead of the containers, export `REMNAWAVE_BASE_URL` and `REMNAWAVE_TOKEN`
+(plus optional `REMNAWAVE_ADMIN_USERNAME` / `REMNAWAVE_ADMIN_PASSWORD`) — the stack is skipped entirely.
+
+### Pre-commit
+
+```bash
+pre-commit install
+pre-commit run --all-files
 ```
 
 ---

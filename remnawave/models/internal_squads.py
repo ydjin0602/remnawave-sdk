@@ -1,116 +1,108 @@
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
+
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field
 
 
-class InboundsDto(BaseModel):
+class InternalSquadInfoDto(BaseModel):
+    members_count: int = Field(..., alias="membersCount")
+    inbounds_count: int = Field(..., alias="inboundsCount")
+
+
+class InternalSquadInboundsDto(BaseModel):
     uuid: UUID
-    profile_uuid: UUID = Field(alias="profileUuid")
+    profile_uuid: UUID = Field(..., alias="profileUuid")
     tag: str
     type: str
-    network: Optional[str] = None
-    security: Optional[str] = None
-    port: Optional[float] = None
-    raw_inbound: Optional[dict] = Field(None, alias="rawInbound")
+    network: str | None = None
+    security: str | None = None
+    port: float | None = None
+    raw_inbound: Any | None = Field(None, alias="rawInbound")
 
 
-class InfoDto(BaseModel):
-    members_count: float = Field(alias="membersCount")
-    inbounds_count: float = Field(alias="inboundsCount")
-
-
-class InternalSquadDto(BaseModel):
+class InternalSquadsDto(BaseModel):
     uuid: UUID
-    view_position: int = Field(alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     name: str
-    info: Optional[InfoDto] = Field(default=None)
-    inbounds: List[InboundsDto] = Field(default_factory=list)
-    created_at: datetime = Field(alias="createdAt")
-    updated_at: datetime = Field(alias="updatedAt")
+    info: InternalSquadInfoDto
+    inbounds: list[InternalSquadInboundsDto]
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+
+
+class GetAllInternalSquadsResponseDto(BaseModel):
+    total: float
+    internal_squads: list[InternalSquadsDto] = Field(..., alias="internalSquads")
+
+
+class GetInternalSquadByUuidResponseDto(InternalSquadsDto):
+    """Alias of InternalSquadsDto (envelope unwrapped)."""
 
 
 class CreateInternalSquadRequestDto(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]
-    inbounds: List[UUID] = Field(default_factory=list)
+    name: str
+    inbounds: list[UUID]
 
 
-class CreateInternalSquadResponseDto(InternalSquadDto):
-    pass
+class CreateInternalSquadResponseDto(InternalSquadsDto):
+    """Alias of InternalSquadsDto (envelope unwrapped)."""
+
+
+class AccessibleNodesDto(BaseModel):
+    uuid: UUID
+    node_name: str = Field(..., alias="nodeName")
+    country_code: str = Field(..., alias="countryCode")
+    config_profile_uuid: UUID = Field(..., alias="configProfileUuid")
+    config_profile_name: str = Field(..., alias="configProfileName")
+    active_inbounds: list[str] = Field(..., alias="activeInbounds")
+
+
+class GetInternalSquadAccessibleNodesResponseDto(BaseModel):
+    squad_uuid: UUID = Field(..., alias="squadUuid")
+    accessible_nodes: list[AccessibleNodesDto] = Field(..., alias="accessibleNodes")
+
+
+class InternalSquadUsersDto(BaseModel):
+    id: int
+    total_bytes: float = Field(..., alias="totalBytes")
+
+
+class GetInternalSquadUsageResponseDto(BaseModel):
+    squad_uuid: UUID = Field(..., alias="squadUuid")
+    users: list[InternalSquadUsersDto]
+    next_cursor: str | None = Field(None, alias="nextCursor")
+    has_more: bool = Field(..., alias="hasMore")
 
 
 class UpdateInternalSquadRequestDto(BaseModel):
     uuid: UUID
-    inbounds: List[UUID] = Field(default_factory=list)
-    name: Optional[Annotated[str, StringConstraints(min_length=2, max_length=30, pattern=r"^[A-Za-z0-9_\s-]+$")]] = None
+    name: str | None = None
+    inbounds: list[UUID] | None = None
 
 
-class UpdateInternalSquadResponseDto(InternalSquadDto):
-    pass
-
-
-class GetAllInternalSquadsResponse(BaseModel):
-    total: float
-    internal_squads: List[InternalSquadDto] = Field(alias="internalSquads")
-
-
-class GetAllInternalSquadsResponseDto(GetAllInternalSquadsResponse):
-    pass
-
-
-class GetInternalSquadByUuidResponseDto(InternalSquadDto):
-    pass
-
-
-class DeleteInternalSquadResponseDto(BaseModel):
-    is_deleted: bool = Field(alias="isDeleted")
-
-
-class AddUsersToInternalSquadRequestDto(BaseModel):
-    user_uuids: List[UUID] = Field(alias="userUuids")
-
-
-class BulkActionsResponseDto(BaseModel):
-    event_sent: bool = Field(alias="eventSent")
-
-
-class AddUsersToInternalSquadResponseDto(BulkActionsResponseDto):
-    pass
-
-
-class DeleteUsersFromInternalSquadRequestDto(BaseModel):
-    user_uuids: List[UUID] = Field(alias="userUuids")
-
-
-class DeleteUsersFromInternalSquadResponseDto(BulkActionsResponseDto):
-    pass
-
-
-class AccessibleNodeDto(BaseModel):
-    uuid: UUID
-    name: str = Field(alias="nodeName")
-    country_code: Optional[str] = Field(default=None, alias="countryCode")
-    config_profile_uuid: Optional[UUID] = Field(default=None, alias="configProfileUuid")
-    config_profile_name: Optional[str] = Field(default=None, alias="configProfileName")
-    active_inbounds: List[Optional[UUID]] = Field(
-        default_factory=list, alias="activeInbounds"
-    )
-
-
-class GetInternalSquadAccessibleNodesResponseDto(BaseModel):
-    squad_uuid: UUID = Field(alias="squadUuid")
-    accessible_nodes: List[AccessibleNodeDto] = Field(alias="accessibleNodes")
+class UpdateInternalSquadResponseDto(InternalSquadsDto):
+    """Alias of InternalSquadsDto (envelope unwrapped)."""
 
 
 class ReorderInternalSquadItem(BaseModel):
-    view_position: int = Field(serialization_alias="viewPosition")
+    view_position: int = Field(..., alias="viewPosition")
     uuid: UUID
 
 
 class ReorderInternalSquadsRequestDto(BaseModel):
-    items: List[ReorderInternalSquadItem]
+    items: list[ReorderInternalSquadItem]
 
 
-class ReorderInternalSquadsResponseDto(GetAllInternalSquadsResponse):
-    pass
+class ReorderInternalSquadsResponseDto(GetAllInternalSquadsResponseDto):
+    """Alias of GetAllInternalSquadsResponseDto (envelope unwrapped)."""
+
+
+class AddManyUsersToInternalSquadRequestDto(BaseModel):
+    user_ids: list[int] = Field(..., serialization_alias="userIds")
+
+
+class DeleteManyUsersFromInternalSquadRequestDto(BaseModel):
+    user_ids: list[int] = Field(..., serialization_alias="userIds")

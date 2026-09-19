@@ -1,6 +1,7 @@
+from collections.abc import Callable, Coroutine
 from functools import partial, wraps
 from inspect import signature
-from typing import Any, Callable, Coroutine, Type
+from typing import Any
 
 from httpx import AsyncClient, Response
 from pydantic import TypeAdapter
@@ -12,7 +13,7 @@ from .client import BaseController, CustomRapidParameters
 def http(
     method: str,
     path: str,
-    response_class: Type[BM | str | bytes | Response] | TypeAdapter[T] = Response,
+    response_class: type[BM | str | bytes | Response] | TypeAdapter[T] = Response,
     timeout: float | None = None,
 ) -> Callable[
     [Callable], Callable[..., Coroutine[Any, Any, BM | str | bytes | Response | T]]
@@ -27,12 +28,12 @@ def http(
         async def wrapper(
             api: BaseController, *args, **kwargs
         ) -> BM | str | bytes | Response | T:
-            assert isinstance(
-                api, BaseController
-            ), f"{api} should be an instance of BaseController"
-            assert isinstance(
-                api.client, AsyncClient
-            ), f"{api.client} should be an instance of httpx.AsyncClient"
+            assert isinstance(api, BaseController), (
+                f"{api} should be an instance of BaseController"
+            )
+            assert isinstance(api.client, AsyncClient), (
+                f"{api.client} should be an instance of httpx.AsyncClient"
+            )
 
             # noinspection PyProtectedMember
             request = api._build_request(

@@ -1,47 +1,41 @@
-from typing import Annotated, List
-from uuid import UUID
+from typing import Annotated
 
-from rapid_api_client import PydanticBody
+from rapid_api_client.annotations import PydanticBody
 
 from remnawave.models import (
-    BulkDeleteHostsResponseDto,
-    BulkDisableHostsResponseDto,
-    BulkEnableHostsResponseDto,
+    BulkDeleteHostsRequestDto,
+    BulkDisableHostsRequestDto,
+    BulkEnableHostsRequestDto,
     UpdateManyHostsRequestDto,
-    UpdateManyHostsResponseDto,
 )
-from remnawave.rapid import AttributeBody, BaseController, patch, post
+from remnawave.rapid import BaseController, patch, post
 
 
 class HostsBulkActionsController(BaseController):
-    @post("/hosts/bulk/delete", response_class=BulkDeleteHostsResponseDto)
-    async def delete_hosts(
+    @post("/hosts/bulk/delete", response_class=None)
+    async def bulk_delete_hosts(
         self,
-        uuids: Annotated[List[UUID], AttributeBody()],
-    ) -> BulkDeleteHostsResponseDto:
-        """Delete many hosts"""
-        ...
+        body: Annotated[BulkDeleteHostsRequestDto, PydanticBody()],
+    ) -> None:
+        """Bulk delete hosts"""
 
-    @post("/hosts/bulk/disable", response_class=BulkDisableHostsResponseDto)
-    async def disable_hosts(
+    @post("/hosts/bulk/disable", response_class=None)
+    async def bulk_disable_hosts(
         self,
-        uuids: Annotated[List[UUID], AttributeBody()],
-    ) -> BulkDisableHostsResponseDto:
-        """Disable many hosts"""
-        ...
+        body: Annotated[BulkDisableHostsRequestDto, PydanticBody()],
+    ) -> None:
+        """Bulk disable hosts"""
 
-    @post("/hosts/bulk/enable", response_class=BulkEnableHostsResponseDto)
-    async def enable_hosts(
+    @post("/hosts/bulk/enable", response_class=None)
+    async def bulk_enable_hosts(
         self,
-        uuids: Annotated[List[UUID], AttributeBody()],
-    ) -> BulkEnableHostsResponseDto:
-        """Enable many hosts"""
-        ...
+        body: Annotated[BulkEnableHostsRequestDto, PydanticBody()],
+    ) -> None:
+        """Bulk enable hosts"""
 
-    @patch("/hosts/bulk/update", response_class=UpdateManyHostsResponseDto)
-    async def update_hosts(
+    @patch("/hosts/bulk/update", response_class=None)
+    async def set_port_to_hosts(
         self,
         body: Annotated[UpdateManyHostsRequestDto, PydanticBody()],
-    ) -> UpdateManyHostsResponseDto:
-        """Update many hosts"""
-        ...
+    ) -> None:
+        """Bulk update hosts (e.g. set port)"""

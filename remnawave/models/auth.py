@@ -1,51 +1,14 @@
-from typing import Annotated, Any, Dict, Optional
+# GENERATED FROM Remnawave API v3.2.3 swagger - review ok
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from typing import Any
 
-from remnawave.enums.auth import OAuth2Provider
+from pydantic import BaseModel, Field
 
-
-class AuthTokenResponseData(BaseModel):
-    access_token: str = Field(alias="accessToken")
+from remnawave.enums import OAuth2Provider
 
 
-class RegisterResponseDto(BaseModel):
-    access_token: str = Field(alias="accessToken")
-
-
-class LoginResponseDto(BaseModel):
-    access_token: str = Field(alias="accessToken")
-
-
-class PasskeyAuthenticationSettings(BaseModel):
-    enabled: bool
-
-
-class OAuth2ProvidersSettings(BaseModel):
-    providers: Dict[str, bool]
-
-
-class PasswordAuthenticationSettings(BaseModel):
-    enabled: bool
-
-
-class AuthenticationSettings(BaseModel):
-    passkey: PasskeyAuthenticationSettings
-    oauth2: OAuth2ProvidersSettings
-    password: PasswordAuthenticationSettings
-
-
-class BrandingSettings(BaseModel):
-    title: Optional[str] = None
-    logo_url: Optional[str] = Field(None, alias="logoUrl")
-
-
-class GetStatusResponseDto(BaseModel):
-    """Status response with authentication and branding settings"""
-    is_login_allowed: bool = Field(alias="isLoginAllowed")
-    is_register_allowed: bool = Field(alias="isRegisterAllowed")
-    authentication: Optional[AuthenticationSettings] = None
-    branding: BrandingSettings
+class VerifyPasskeyRegistrationRequestDto(BaseModel):
+    pass
 
 
 class LoginRequestDto(BaseModel):
@@ -53,77 +16,70 @@ class LoginRequestDto(BaseModel):
     password: str
 
 
+class LoginResponseDto(BaseModel):
+    access_token: str = Field(..., alias="accessToken")
+
+
 class RegisterRequestDto(BaseModel):
     username: str
-    password: Annotated[str, StringConstraints(min_length=24)]
-
-    @field_validator("password")
-    @classmethod
-    def validate_password_complexity(cls, v: str) -> str:
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit")
-        return v
+    password: str
 
 
-class TelegramCallbackRequestDto(BaseModel):
-    id: int
-    first_name: str
-    last_name: Optional[str] = None
-    username: Optional[str] = None
-    photo_url: Optional[str] = None
-    auth_date: int
-    hash: str
+class RegisterResponseDto(LoginResponseDto):
+    """Alias of LoginResponseDto (envelope unwrapped)."""
 
 
-class TelegramCallbackResponseDto(AuthTokenResponseData):
-    pass
+class PasskeyDto(BaseModel):
+    enabled: bool
 
 
-# OAuth2 Authorization models
+class Oauth2Dto(BaseModel):
+    providers: dict[str, Any]
+
+
+class AuthenticationDto(BaseModel):
+    passkey: PasskeyDto
+    oauth2: Oauth2Dto
+    password: PasskeyDto
+
+
+class BrandingDto(BaseModel):
+    title: str | None = None
+    logo_url: str | None = Field(None, alias="logoUrl")
+
+
+class GetStatusResponseDto(BaseModel):
+    is_login_allowed: bool = Field(..., alias="isLoginAllowed")
+    is_register_allowed: bool = Field(..., alias="isRegisterAllowed")
+    authentication: AuthenticationDto | None = None
+    branding: BrandingDto
+
+
 class OAuth2AuthorizeRequestDto(BaseModel):
-    """Request to initiate OAuth2 authorization"""
     provider: OAuth2Provider
 
 
 class OAuth2AuthorizeResponseDto(BaseModel):
-    """Response with OAuth2 authorization URL"""
-    authorization_url: Optional[str] = Field(alias="authorizationUrl")
+    authorization_url: str | None = Field(None, alias="authorizationUrl")
 
 
-# OAuth2 Callback models
 class OAuth2CallbackRequestDto(BaseModel):
-    """Request for OAuth2 callback"""
     provider: OAuth2Provider
     code: str
     state: str
 
 
-class OAuth2CallbackResponseDto(BaseModel):
-    """Response with access token from OAuth2 callback"""
-    access_token: str = Field(alias="accessToken")
+class OAuth2CallbackResponseDto(LoginResponseDto):
+    """Alias of LoginResponseDto (envelope unwrapped)."""
 
 
-# Passkey Authentication models
-class GetPasskeyAuthenticationOptionsResponseDto(BaseModel):
-    """Response with passkey authentication options"""
-    # Passkey options are complex WebAuthn objects
-    pass
+class GetPasskeyAuthenticationOptionsResponseDto(VerifyPasskeyRegistrationRequestDto):
+    """Alias of VerifyPasskeyRegistrationRequestDto (envelope unwrapped)."""
 
 
-class VerifyPasskeyAuthenticationRequestDto(BaseModel):
-    """Request to verify passkey authentication"""
-    # Passkey authentication response is complex WebAuthn object
-    response: Dict[str, Any]
+class VerifyPasskeyAuthenticationRequestDto(VerifyPasskeyRegistrationRequestDto):
+    """Alias of VerifyPasskeyRegistrationRequestDto (envelope unwrapped)."""
 
 
-class VerifyPasskeyAuthenticationResponseDto(BaseModel):
-    """Response with access token after successful passkey authentication"""
-    access_token: str = Field(alias="accessToken")
-
-# Legacy alias for backward compatibility
-StatusResponseDto = GetStatusResponseDto
-LoginTelegramRequestDto = TelegramCallbackRequestDto
+class VerifyPasskeyAuthenticationResponseDto(LoginResponseDto):
+    """Alias of LoginResponseDto (envelope unwrapped)."""
